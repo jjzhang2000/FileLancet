@@ -1,0 +1,54 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ReSharper
+.idea/
+*.csproj.user
+*.sln.user
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet
+packages/
+.nuget/
+*.nupkg
+
+# Environment variables
+.env
+appsettings.Development.json
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Testing
+coverage/
+
+# Other
+*.swp
+*.swo
+*~
