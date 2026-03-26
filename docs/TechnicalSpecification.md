@@ -9,8 +9,8 @@
   - 理由：利用 .NET 强大的原生库（System.IO.Compression, System.Xml.Linq）处理文件底层结构；强类型系统确保数据模型的严谨性；跨平台编译能力成熟。
 
 ### UI 框架
-- **Avalonia UI**
-  - 理由：相比 .NET MAUI，Avalonia 在桌面端（尤其是 Linux）拥有更稳定的渲染一致性和更成熟的控件生态（如 TreeDataGrid）；其基于 Skia 的自绘引擎保证了工具界面的像素级还原。
+- **WPF (Windows Presentation Foundation)**
+  - 理由：Windows 原生 UI 框架，与 Windows 系统深度集成；提供丰富的控件库（TreeView、DataGrid、WebView2 等）和成熟的数据绑定机制；基于 DirectX 的硬件加速渲染，性能优异；适合开发高性能桌面工具类软件。
 
 ### 架构模式
 - **MVVM**
@@ -172,8 +172,8 @@
 - **任务 3.1：内存优化**
   - 检查大文件加载时的内存占用，确保 ZIP 流在使用后及时释放。
 
-- **任务 3.2：跨平台打包**
-  - 编写发布脚本，生成 Windows（.exe/.msi）和 Linux（AppImage/.deb）安装包。
+- **任务 3.2：打包发布**
+  - 编写发布脚本，生成 Windows 安装包（.exe/.msi）和便携版（.zip）。
 
 **里程碑交付物**
 - 具备多格式支持能力的架构框架，以及 File Lancet v0.1 稳定版。
@@ -218,14 +218,14 @@
 - **测试方法**：使用 BenchmarkDotNet 进行基准测试，记录关键操作的性能数据。
 - **压力测试**：连续打开/关闭多个大文件，检测内存泄漏和资源释放情况。
 
-### 跨平台测试
+### 兼容性测试
 
 - **测试环境**：
-  - Windows 10/11（x64、ARM64）
-  - Ubuntu 22.04 LTS、Fedora 39
+  - Windows 10（x64）
+  - Windows 11（x64、ARM64）
 - **测试内容**：
-  - 文件路径处理（Windows 反斜杠 vs Linux 正斜杠）
-  - 界面渲染一致性
+  - 文件路径处理（不同 Windows 版本的特殊路径情况）
+  - 界面渲染一致性（不同 DPI 设置、缩放比例）
   - 打包后的安装包可正常安装运行
 - **兼容性**：测试不同 .NET 运行时版本（.NET 8、.NET 9）的兼容性。
 
