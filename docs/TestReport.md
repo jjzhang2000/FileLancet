@@ -4,8 +4,8 @@
 
 - **测试日期**: 2026-03-26
 - **测试框架**: xUnit
-- **测试总数**: 121
-- **通过**: 121
+- **测试总数**: 129
+- **通过**: 129
 - **失败**: 0
 - **跳过**: 0
 - **整体状态**: ✅ 通过
@@ -469,3 +469,16 @@ XML 解析工具类：
 ### 阶段六测试文件
 
 - 十六进制预览功能测试（TC-601~TC-608）- 集成在现有 PreviewViewModel 测试中
+
+### 阶段七新增文件
+
+- `src/FileLancet.Core/Services/GenericFileParser.cs` - 通用文件解析器（兜底解析器）
+
+### 阶段七更新文件
+
+- `src/FileLancet.Core/Factories/ParserFactory.cs` - 注册 GenericFileParser 作为兜底
+- `src/FileLancet.Core/Models/FileDetails.cs` - 新增 CreatedTime、FileExtension、MimeType 属性
+- `src/FileLancet.UI/ViewModels/NodeDetailsViewModel.cs` - 新增 FileExtension 属性绑定
+- `src/FileLancet.UI/ViewModels/MainViewModel.cs` - 更新节点详情显示逻辑
+- `src/FileLancet.UI/Views/MainWindow.xaml` - 详情面板添加扩展名、MIME类型、修改日期显示
+- `tests/FileLancet.Core.Tests/Factories/ParserFactoryTests.cs` - 更新测试适配3个解析器
