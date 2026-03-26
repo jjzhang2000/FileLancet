@@ -198,18 +198,19 @@ namespace FileLancet.UI.ViewModels
                 if (result.Success)
                 {
                     FileTreeNodes.Clear();
-                    if (result.RootNode != null)
-                    {
-                        FileTreeNodes.Add(result.RootNode);
-                        // 自动选中根节点
-                        SelectedNode = result.RootNode;
-                    }
-                    FileDetails = result.Details;
-
-                    // 创建新的内容加载器
+                    
+                    // 先创建内容加载器（在选中节点之前）
                     _contentLoader = _isGenericFile 
                         ? new GenericContentLoader(filePath)
                         : new EpubContentLoader(filePath);
+                    
+                    if (result.RootNode != null)
+                    {
+                        FileTreeNodes.Add(result.RootNode);
+                        FileDetails = result.Details;
+                        // 自动选中根节点（此时_contentLoader已准备好）
+                        SelectedNode = result.RootNode;
+                    }
 
                     StatusMessage = $"Loaded: {Path.GetFileName(filePath)}";
                 }
