@@ -201,6 +201,8 @@ namespace FileLancet.UI.ViewModels
                     if (result.RootNode != null)
                     {
                         FileTreeNodes.Add(result.RootNode);
+                        // 自动选中根节点
+                        SelectedNode = result.RootNode;
                     }
                     FileDetails = result.Details;
 
