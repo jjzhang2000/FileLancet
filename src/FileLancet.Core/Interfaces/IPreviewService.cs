@@ -139,7 +139,10 @@ public interface IPreviewService
     /// <summary>
     /// 根据节点类型获取预览内容
     /// </summary>
-    Task<PreviewResult> GetPreviewAsync(FileNode node, IContentLoader contentLoader);
+    /// <param name="node">文件节点</param>
+    /// <param name="contentLoader">内容加载器</param>
+    /// <param name="isGenericFile">是否为通用文件（非EPUB等结构化文件）</param>
+    Task<PreviewResult> GetPreviewAsync(FileNode node, IContentLoader contentLoader, bool isGenericFile = false);
 
     /// <summary>
     /// 获取预览服务的支持类型

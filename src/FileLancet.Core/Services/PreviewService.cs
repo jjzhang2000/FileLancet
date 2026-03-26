@@ -35,7 +35,7 @@ public class PreviewService : IPreviewService
     public IEnumerable<NodeType> SupportedTypes => _previewHandlers.Keys;
 
     /// <inheritdoc />
-    public async Task<PreviewResult> GetPreviewAsync(FileNode node, IContentLoader contentLoader)
+    public async Task<PreviewResult> GetPreviewAsync(FileNode node, IContentLoader contentLoader, bool isGenericFile = false)
     {
         if (node == null)
             return PreviewResult.Error("节点为空");
@@ -45,8 +45,20 @@ public class PreviewService : IPreviewService
 
         try
         {
-            // 文件夹和根节点特殊处理
-            if (node.Type == NodeType.Folder || node.Type == NodeType.Root)
+            // 文件夹特殊处理
+            if (node.Type == NodeType.Folder)
+            {
+                return PreviewFolder(node);
+            }
+
+            // 通用文件的根节点（无子节点）使用二进制预览
+            if (node.Type == NodeType.Root && isGenericFile)
+            {
+                return await PreviewBinaryAsync(node, contentLoader);
+            }
+
+            // 根节点特殊处理（有子节点的，如EPUB）
+            if (node.Type == NodeType.Root)
             {
                 return PreviewFolder(node);
             }
@@ -58,7 +70,7 @@ public class PreviewService : IPreviewService
             }
 
             // 默认使用二进制预览
-            return PreviewBinary(node);
+            return await PreviewBinaryAsync(node, contentLoader);
         }
         catch (Exception ex)
         {

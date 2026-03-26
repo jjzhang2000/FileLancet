@@ -23,6 +23,7 @@ namespace FileLancet.UI.ViewModels
         private FileDetails? _fileDetails;
         private IContentLoader? _contentLoader;
         private readonly IPreviewService _previewService;
+        private bool _isGenericFile; // 标记是否为通用文件（非EPUB等结构化文件）
 
         public MainViewModel()
         {
@@ -189,6 +190,9 @@ namespace FileLancet.UI.ViewModels
                     return;
                 }
 
+                // 检查是否为通用文件解析器
+                _isGenericFile = parser is GenericFileParser;
+
                 var result = await parser.ParseAsync(filePath);
 
                 if (result.Success)
@@ -310,7 +314,7 @@ namespace FileLancet.UI.ViewModels
 
             try
             {
-                var result = await _previewService.GetPreviewAsync(SelectedNode, _contentLoader);
+                var result = await _previewService.GetPreviewAsync(SelectedNode, _contentLoader, _isGenericFile);
                 Preview.UpdateFromPreviewResult(result);
             }
             catch (Exception ex)
