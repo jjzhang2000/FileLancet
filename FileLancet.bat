@@ -1,11 +1,11 @@
 @echo off
 chcp 65001 >nul
 echo ============================================
-echo File Lancet - Phase 6 Verification
+echo File Lancet - Phase 7 Verification
 echo ============================================
 echo.
 
-echo Step 1 of 11: Checking .NET SDK...
+echo Step 1 of 13: Checking .NET SDK...
 dotnet --version >nul 2>&1
 if errorlevel 1 (
     echo ERROR: .NET SDK not found. Please install .NET 8.0 or higher.
@@ -14,7 +14,7 @@ if errorlevel 1 (
 echo OK: .NET SDK installed
 echo.
 
-echo Step 2 of 11: Building solution...
+echo Step 2 of 13: Building solution...
 cd /d "%~dp0"
 dotnet clean >nul 2>&1
 dotnet build --verbosity quiet 2>nul
@@ -25,7 +25,7 @@ if errorlevel 1 (
 echo OK: Build successful
 echo.
 
-echo Step 3 of 11: Running all unit tests...
+echo Step 3 of 13: Running all unit tests...
 dotnet test --verbosity quiet --no-build 2>nul
 if errorlevel 1 (
     echo ERROR: Tests failed
@@ -34,11 +34,11 @@ if errorlevel 1 (
 echo OK: All tests passed
 echo.
 
-echo Step 4 of 11: Test statistics
+echo Step 4 of 13: Test statistics
 dotnet test --no-build 2>nul
 echo.
 
-echo Step 5 of 11: Verifying Phase 1 project structure...
+echo Step 5 of 13: Verifying Phase 1 project structure...
 set PHASE1_OK=1
 
 if not exist "src\FileLancet.Core\Models\FileNode.cs" (
@@ -79,7 +79,7 @@ if %PHASE1_OK%==1 (
 )
 echo.
 
-echo Step 6 of 11: Verifying Phase 2 project structure...
+echo Step 6 of 13: Verifying Phase 2 project structure...
 set PHASE2_OK=1
 
 if not exist "src\FileLancet.UI\Views\MainWindow.xaml" (
@@ -115,7 +115,7 @@ if %PHASE2_OK%==1 (
 )
 echo.
 
-echo Step 7 of 11: Verifying Phase 3 project structure...
+echo Step 7 of 13: Verifying Phase 3 project structure...
 set PHASE3_OK=1
 
 if not exist "src\FileLancet.Core\Interfaces\IContentLoader.cs" (
@@ -151,7 +151,7 @@ if %PHASE3_OK%==1 (
 )
 echo.
 
-echo Step 8 of 11: Verifying Phase 4 project structure...
+echo Step 8 of 13: Verifying Phase 4 project structure...
 set PHASE4_OK=1
 
 if not exist "src\FileLancet.Core\Services\BaseParser.cs" (
@@ -187,7 +187,7 @@ if %PHASE4_OK%==1 (
 )
 echo.
 
-echo Step 9 of 11: Verifying Phase 5 project structure...
+echo Step 9 of 13: Verifying Phase 5 project structure...
 set PHASE5_OK=1
 
 if not exist "src\FileLancet.Core\Utilities\XmlParserHelper.cs" (
@@ -208,7 +208,7 @@ if %PHASE5_OK%==1 (
 )
 echo.
 
-echo Step 10 of 11: Verifying Phase 3-4 features...
+echo Step 10 of 13: Verifying Phase 3-4 features...
 echo Checking drag-drop support...
 findstr /C:"SetupDragDrop" "src\FileLancet.UI\Views\MainWindow.xaml.cs" >nul 2>&1
 if errorlevel 1 (
@@ -268,7 +268,7 @@ if errorlevel 1 (
 )
 echo.
 
-echo Step 12 of 12: Verifying Phase 6 Hex Preview features...
+echo Step 12 of 13: Verifying Phase 6 Hex Preview features...
 echo Checking HexContent property...
 findstr /C:"HexContent" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
 if errorlevel 1 (
@@ -304,6 +304,45 @@ echo.
 
 echo ============================================
 echo Phase 6 Verification Complete
+echo ============================================
+echo.
+
+echo Step 13 of 13: Verifying Phase 7 Generic File Support...
+echo Checking GenericFileParser implementation...
+findstr /C:"class GenericFileParser" "src\FileLancet.Core\Services\GenericFileParser.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: GenericFileParser may be missing
+) else (
+    echo OK: GenericFileParser implementation found
+)
+
+echo Checking GenericFileParser registration...
+findstr /C:"GenericFileParser" "src\FileLancet.Core\Factories\ParserFactory.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: GenericFileParser not registered
+) else (
+    echo OK: GenericFileParser registered in factory
+)
+
+echo Checking FileDetails new properties...
+findstr /C:"FileExtension" "src\FileLancet.Core\Models\FileDetails.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: FileExtension property may be missing
+) else (
+    echo OK: FileExtension property found
+)
+
+echo Checking NodeDetailsViewModel FileExtension property...
+findstr /C:"FileExtension" "src\FileLancet.UI\ViewModels\NodeDetailsViewModel.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: NodeDetailsViewModel.FileExtension may be missing
+) else (
+    echo OK: NodeDetailsViewModel.FileExtension property found
+)
+echo.
+
+echo ============================================
+echo Phase 7 Verification Complete
 echo ============================================
 echo.
 echo Phase 1 - Core Parser
@@ -352,6 +391,14 @@ echo   - Monospace font         Use Consolas/Courier New
 echo   - ASCII alignment        Align ASCII column correctly
 echo   - Full width separator   Dash bar covers entire line
 echo.
+echo Phase 7 - Generic File Support (Fallback)
+echo   - GenericFileParser      Universal file parser as fallback
+echo   - Any file format        Support opening any file type
+echo   - Hex preview default    Show hex for unsupported formats
+echo   - File tree simplification  Show only filename, no children
+echo   - Extended file info     Extension, MIME, size, modified date
+echo   - FileDetails update     Added CreatedTime, FileExtension, MimeType
+echo.
 echo Test Summary
 echo   - Phase 1: 58 tests passed
 echo   - Phase 2: 15 tests passed
@@ -359,7 +406,8 @@ echo   - Phase 3: 16 tests passed
 echo   - Phase 4: 16 tests passed
 echo   - Phase 5: 16 tests passed
 echo   - Phase 6: 8 tests passed
-echo   - Total: 129 tests passed
+echo   - Phase 7: Updated tests
+echo   - Total: 129+ tests passed
 echo   - Coverage: approx 92%%
 echo.
 echo New Phase 5 Features

@@ -397,7 +397,19 @@ XML 解析工具类：
 5. 使用等宽字体（Consolas, Courier New, monospace）确保对齐
 6. 所有 8 个阶段六测试用例通过
 
-**整体项目状态**: ✅ 阶段一、阶段二、阶段三、阶段四、阶段五和阶段六已完成
+### 阶段七完成状态: ✅ 已完成
+
+通用文件支持（兜底功能）：
+1. 实现 GenericFileParser 通用文件解析器，作为兜底解析器
+2. 支持打开任何格式的文件（不限于 EPUB）
+3. 不支持的格式默认以十六进制方式预览
+4. 文件树只保留文件名（无子节点结构）
+5. 详情面板显示：文件名、扩展名、MIME类型、大小、修改日期、路径
+6. 更新 ParserFactory，通用解析器最后注册作为兜底
+7. FileDetails 模型新增 CreatedTime、FileExtension、MimeType 属性
+8. 更新测试用例，适配3个默认解析器（EpubParser + PlainTextParser + GenericFileParser）
+
+**整体项目状态**: ✅ 阶段一、阶段二、阶段三、阶段四、阶段五、阶段六和阶段七已完成
 
 ---
 
