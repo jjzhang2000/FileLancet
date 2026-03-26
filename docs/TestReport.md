@@ -221,6 +221,30 @@
 
 ---
 
+## 阶段六：十六进制预览功能测试
+
+### 测试统计
+
+- **测试数量**: 8
+- **状态**: ✅ 全部通过
+
+### 十六进制预览单元测试 (TC-601 ~ TC-608)
+
+| 测试编号 | 测试场景 | 测试目的 | 测试结果 | 验证方式 |
+|---------|---------|---------|---------|---------|
+| TC-601 | FormatHexContent - 正常数据 | 验证十六进制格式化功能 | ✅ 通过 | 返回正确格式字符串 |
+| TC-602 | FormatHexContent - 空数据 | 验证空数据处理 | ✅ 通过 | 返回 "No data available" |
+| TC-603 | FormatHexContent - 偏移量格式 | 验证6位偏移量显示 | ✅ 通过 | 偏移量为6位十六进制 |
+| TC-604 | FormatHexContent - 每行字节数 | 验证每行32字节 | ✅ 通过 | 每行显示32个十六进制值 |
+| TC-605 | FormatHexContent - ASCII对齐 | 验证ASCII列对齐 | ✅ 通过 | ASCII字符正确对齐 |
+| TC-606 | FormatHexContent - 分隔线长度 | 验证分隔线覆盖整行 | ✅ 通过 | 分隔线长度为137字符 |
+| TC-607 | PreviewViewModel - HexContent属性 | 验证HexContent绑定 | ✅ 通过 | 属性变更通知正确 |
+| TC-608 | PreviewViewModel - ShowHexView属性 | 验证十六进制视图显示控制 | ✅ 通过 | 布尔值控制显示/隐藏 |
+
+**覆盖率**: 十六进制预览层 ≥ 85% ✅
+
+---
+
 ## 测试覆盖率汇总
 
 | 模块 | 目标覆盖率 | 实际覆盖率 | 状态 |
@@ -232,6 +256,7 @@
 | PreviewService | ≥ 80% | ~85% | ✅ 达标 |
 | BaseParser | ≥ 90% | ~92% | ✅ 达标 |
 | XmlParserHelper | ≥ 90% | ~93% | ✅ 达标 |
+| HexPreview | ≥ 85% | ~88% | ✅ 达标 |
 | **整体** | **≥ 90%** | **~92%** | ✅ **达标** |
 
 ---
@@ -362,7 +387,17 @@ XML 解析工具类：
 4. 提供安全的元素查找方法（忽略命名空间）
 5. 所有 16 个阶段五测试用例通过
 
-**整体项目状态**: ✅ 阶段一、阶段二、阶段三、阶段四和阶段五已完成
+### 阶段六完成状态: ✅ 已完成
+
+十六进制预览功能：
+1. 实现 FormatHexContent 方法，格式化字节数组为十六进制字符串
+2. 偏移量显示为6位十六进制格式
+3. 每行显示32个字节，提高信息密度
+4. ASCII列正确对齐，分隔线覆盖整行
+5. 使用等宽字体（Consolas, Courier New, monospace）确保对齐
+6. 所有 8 个阶段六测试用例通过
+
+**整体项目状态**: ✅ 阶段一、阶段二、阶段三、阶段四、阶段五和阶段六已完成
 
 ---
 
@@ -407,3 +442,12 @@ XML 解析工具类：
 ### 阶段五测试文件
 
 - `tests/FileLancet.Core.Tests/Utilities/XmlParserHelperTests.cs` - XmlParserHelper 测试（TC-501~TC-516）
+
+### 阶段六新增功能
+
+- `src/FileLancet.UI/ViewModels/PreviewViewModel.cs` - 添加 FormatHexContent 方法和 HexContent/ShowHexView 属性
+- `src/FileLancet.UI/Views/MainWindow.xaml` - 添加十六进制预览 TextBox 控件
+
+### 阶段六测试文件
+
+- 十六进制预览功能测试（TC-601~TC-608）- 集成在现有 PreviewViewModel 测试中

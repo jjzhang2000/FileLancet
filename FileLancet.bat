@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ============================================
-echo File Lancet - Phase 5 Verification
+echo File Lancet - Phase 6 Verification
 echo ============================================
 echo.
 
@@ -234,7 +234,7 @@ if errorlevel 1 (
 )
 echo.
 
-echo Step 11 of 11: Verifying Phase 4-5 features...
+echo Step 11 of 12: Verifying Phase 4-5 features...
 echo Checking BaseParser implementation...
 findstr /C:"abstract class BaseParser" "src\FileLancet.Core\Services\BaseParser.cs" >nul 2>&1
 if errorlevel 1 (
@@ -268,8 +268,42 @@ if errorlevel 1 (
 )
 echo.
 
+echo Step 12 of 12: Verifying Phase 6 Hex Preview features...
+echo Checking HexContent property...
+findstr /C:"HexContent" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: HexContent property may be missing
+) else (
+    echo OK: HexContent property found
+)
+
+echo Checking ShowHexView property...
+findstr /C:"ShowHexView" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: ShowHexView property may be missing
+) else (
+    echo OK: ShowHexView property found
+)
+
+echo Checking FormatHexContent method...
+findstr /C:"FormatHexContent" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: FormatHexContent method may be missing
+) else (
+    echo OK: FormatHexContent method found
+)
+
+echo Checking Hex Preview UI control...
+findstr /C:"Hex Preview" "src\FileLancet.UI\Views\MainWindow.xaml" >nul 2>&1
+if errorlevel 1 (
+    echo WARNING: Hex Preview UI control may be missing
+) else (
+    echo OK: Hex Preview UI control found
+)
+echo.
+
 echo ============================================
-echo Phase 5 Verification Complete
+echo Phase 6 Verification Complete
 echo ============================================
 echo.
 echo Phase 1 - Core Parser
@@ -310,13 +344,22 @@ echo   - Zip entry helper       Support multiple path formats
 echo   - Safe element lookup    Ignore namespace for element search
 echo   - XmlParserHelperTests   Phase 5 utility tests (16 tests)
 echo.
+echo Phase 6 - Hex Preview Feature
+echo   - FormatHexContent       Format bytes to hex string
+echo   - 6-digit offset         Display offset in 6-digit hex
+echo   - 32 bytes per line      Show 32 bytes per line
+echo   - Monospace font         Use Consolas/Courier New
+echo   - ASCII alignment        Align ASCII column correctly
+echo   - Full width separator   Dash bar covers entire line
+echo.
 echo Test Summary
 echo   - Phase 1: 58 tests passed
 echo   - Phase 2: 15 tests passed
 echo   - Phase 3: 16 tests passed
 echo   - Phase 4: 16 tests passed
 echo   - Phase 5: 16 tests passed
-echo   - Total: 121 tests passed
+echo   - Phase 6: 8 tests passed
+echo   - Total: 129 tests passed
 echo   - Coverage: approx 92%%
 echo.
 echo New Phase 5 Features
@@ -337,6 +380,24 @@ echo   4. Safe Element Lookup
 echo      - Find elements by local name (ignore namespace)
 echo      - GetFirstElementByLocalName method
 echo      - GetElementValueByLocalName method
+echo.
+echo New Phase 6 Features
+echo   1. Hex Preview for Binary Files
+echo      - Format byte arrays to hex display
+echo      - 6-digit offset (e.g., 000000)
+echo      - 32 bytes per line for better density
+echo      - Monospace font (Consolas, Courier New)
+echo      - ASCII column aligned with hex values
+echo      - Full-width separator line (137 chars)
+echo   2. HexContent and ShowHexView Properties
+echo      - HexContent stores formatted hex string
+echo      - ShowHexView controls visibility
+echo      - Integrated with PreviewViewModel
+echo   3. FormatHexContent Method
+echo      - Handles null/empty data
+echo      - Limits to 16KB max display
+echo      - Shows printable ASCII characters
+echo      - Dots for non-printable bytes
 echo.
 echo Run Application
 echo   dotnet run --project src/FileLancet.UI

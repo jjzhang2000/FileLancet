@@ -115,9 +115,25 @@ public class PreviewService : IPreviewService
     /// <summary>
     /// 二进制文件预览
     /// </summary>
-    private Task<PreviewResult> PreviewBinaryAsync(FileNode node, IContentLoader contentLoader)
+    private async Task<PreviewResult> PreviewBinaryAsync(FileNode node, IContentLoader contentLoader)
     {
-        return Task.FromResult(PreviewBinary(node));
+        try
+        {
+            // 加载文件内容以显示十六进制
+            var content = await contentLoader.LoadContentAsync(node);
+
+            var info = $"{node.Type} 文件\n" +
+                       $"文件名: {node.Name}\n" +
+                       $"大小: {FormatFileSize(node.Size)}\n" +
+                       $"MIME 类型: {node.MimeType ?? "未知"}";
+
+            return PreviewResult.Binary(info, node.Size, content);
+        }
+        catch
+        {
+            // 如果加载失败，只显示基本信息
+            return PreviewBinary(node);
+        }
     }
 
     /// <summary>

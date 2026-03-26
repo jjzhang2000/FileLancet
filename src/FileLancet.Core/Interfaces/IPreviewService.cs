@@ -106,13 +106,14 @@ public class PreviewResult
     /// <summary>
     /// 创建二进制预览结果
     /// </summary>
-    public static PreviewResult Binary(string info, long size)
+    public static PreviewResult Binary(string info, long size, byte[]? data = null)
     {
         return new PreviewResult
         {
             ContentType = PreviewContentType.Binary,
             BinaryInfo = info,
-            FileSize = size
+            FileSize = size,
+            ImageData = data
         };
     }
 

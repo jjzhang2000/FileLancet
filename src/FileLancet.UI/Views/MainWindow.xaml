@@ -34,132 +34,138 @@
             <Button Content="About" Click="AboutMenuItem_Click" Padding="15,5" Margin="5,0,0,0"/>
         </ToolBar>
 
-        <!-- Main Content - Three Column Layout -->
+        <!-- Main Content - Left Panel (Tree + Details) and Right Panel (Preview) -->
         <Grid Grid.Row="1" Margin="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" MinWidth="200" MaxWidth="500"/>
+                <ColumnDefinition Width="350" MinWidth="250" MaxWidth="500"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*" MinWidth="300"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="400" MinWidth="250" MaxWidth="600"/>
+                <ColumnDefinition Width="*" MinWidth="500"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left Column: File Tree -->
-            <Border Grid.Column="0" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="File Structure" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-                    
-                    <TreeView Grid.Row="1" 
-                              ItemsSource="{Binding FileTreeNodes}"
-                              SelectedItemChanged="TreeView_SelectedItemChanged"
-                              Margin="2">
-                        <TreeView.ItemTemplate>
-                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Name}" Margin="2,0"/>
-                                    <TextBlock Text="{Binding Type, StringFormat=' ({0})'}" 
-                                               Foreground="Gray" 
-                                               FontSize="10"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </HierarchicalDataTemplate>
-                        </TreeView.ItemTemplate>
-                    </TreeView>
-                </Grid>
-            </Border>
+            <!-- Left Column: File Tree + Details (Stacked vertically) -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" MinHeight="200"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="250" MinHeight="150" MaxHeight="400"/>
+                </Grid.RowDefinitions>
 
-            <!-- Splitter 1 -->
+                <!-- Top: File Tree -->
+                <Border Grid.Row="0" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="File Structure" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                        
+                        <TreeView Grid.Row="1" 
+                                  ItemsSource="{Binding FileTreeNodes}"
+                                  SelectedItemChanged="TreeView_SelectedItemChanged"
+                                  Margin="2">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" Margin="2,0"/>
+                                        <TextBlock Text="{Binding Type, StringFormat=' ({0})'}" 
+                                                   Foreground="Gray" 
+                                                   FontSize="10"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </Grid>
+                </Border>
+
+                <!-- Splitter between Tree and Details -->
+                <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" 
+                              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                              ShowsPreview="False"/>
+
+                <!-- Bottom: Details Panel -->
+                <Border Grid.Row="2" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Details" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                        
+                        <!-- Basic Info -->
+                        <Grid Grid.Row="1" Margin="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NodeDetails.NodeName}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NodeDetails.NodeType}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Size:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NodeDetails.FileSize}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Path:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NodeDetails.NodePath}" Margin="2" TextWrapping="Wrap"/>
+                        </Grid>
+                        
+                        <!-- EPUB Metadata -->
+                        <Grid Grid.Row="2" Margin="5" Visibility="{Binding NodeDetails.IsEpubMetadataVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="EPUB Metadata" FontWeight="Bold" FontSize="14" Margin="0,10,0,5" Foreground="DarkBlue"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Title:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NodeDetails.Title}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Authors:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NodeDetails.Authors}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Publisher:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NodeDetails.Publisher}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Language:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding NodeDetails.Language}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Version:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding NodeDetails.EpubVersion}" Margin="2"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Splitter between Left and Right -->
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" 
                           Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                           ShowsPreview="False"/>
 
-            <!-- Middle Column: Details -->
+            <!-- Right Column: Preview (Wider) -->
             <Border Grid.Column="2" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="Details" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-                    
-                    <!-- Basic Info -->
-                    <Grid Grid.Row="1" Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding NodeDetails.NodeName}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NodeDetails.NodeType}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Size:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NodeDetails.FileSize}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Path:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NodeDetails.NodePath}" Margin="2" TextWrapping="Wrap"/>
-                    </Grid>
-                    
-                    <!-- EPUB Metadata -->
-                    <Grid Grid.Row="2" Margin="5" Visibility="{Binding NodeDetails.IsEpubMetadataVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        
-                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="EPUB Metadata" FontWeight="Bold" FontSize="14" Margin="0,10,0,5" Foreground="DarkBlue"/>
-                        
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Title:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NodeDetails.Title}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Authors:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NodeDetails.Authors}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Publisher:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NodeDetails.Publisher}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Language:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding NodeDetails.Language}" Margin="2"/>
-                        
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Version:" FontWeight="Bold" Margin="2"/>
-                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding NodeDetails.EpubVersion}" Margin="2"/>
-                    </Grid>
-                </Grid>
-            </Border>
-
-            <!-- Splitter 2 -->
-            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch" 
-                          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                          ShowsPreview="False"/>
-
-            <!-- Right Column: Preview -->
-            <Border Grid.Column="4" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -167,7 +173,7 @@
                     <TextBlock Grid.Row="0" Text="{Binding Preview.PreviewTitle}" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
                     
                     <!-- Text Preview (for plain text only) -->
-                    <TextBox Grid.Row="2" 
+                    <TextBox Grid.Row="1" 
                              Text="{Binding Preview.TextContent}" 
                              IsReadOnly="True"
                              VerticalScrollBarVisibility="Auto"
@@ -176,7 +182,7 @@
                              Visibility="{Binding Preview.ShowStructuredView, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                     
                     <!-- Structured Code Preview (TreeView) -->
-                    <TreeView Grid.Row="2" 
+                    <TreeView Grid.Row="1" 
                               ItemsSource="{Binding Preview.StructuredContent.Children}"
                               Visibility="{Binding Preview.ShowStructuredView, Converter={StaticResource BooleanToVisibilityConverter}}"
                               VirtualizingStackPanel.IsVirtualizing="True"
@@ -219,20 +225,23 @@
                         </TreeView>
                     
                     <!-- Image Preview -->
-                    <Image Grid.Row="2" 
+                    <Image Grid.Row="1" 
                            Source="{Binding Preview.ImageContent}" 
                            Stretch="Uniform"
                            Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Image}"/>
                     
-                    <!-- Binary Preview -->
-                    <TextBlock Grid.Row="2" 
-                               Text="{Binding Preview.BinaryInfo}" 
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Binary}"/>
-                    
+                    <!-- Hex Preview (for binary files) -->
+                    <TextBox Grid.Row="1" 
+                             Text="{Binding Preview.HexContent}" 
+                             IsReadOnly="True"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             FontFamily="Consolas, Courier New, monospace"
+                             FontSize="12"
+                             Visibility="{Binding Preview.ShowHexView, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
                     <!-- Empty/None Preview -->
-                    <TextBlock Grid.Row="2" 
+                    <TextBlock Grid.Row="1" 
                                Text="Select a file to preview"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"

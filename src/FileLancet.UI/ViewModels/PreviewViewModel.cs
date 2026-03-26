@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using FileLancet.Core.Interfaces;
@@ -21,7 +22,8 @@ namespace FileLancet.UI.ViewModels
         Image,
         Binary,
         Code,
-        StructuredCode
+        StructuredCode,
+        Hex
     }
 
     /// <summary>
@@ -42,6 +44,8 @@ namespace FileLancet.UI.ViewModels
         private bool _hasError;
         private CodeStructureNode? _structuredContent;
         private bool _showStructuredView = false;
+        private string _hexContent = "";
+        private bool _showHexView = false;
 
         #region Properties
 
@@ -129,6 +133,24 @@ namespace FileLancet.UI.ViewModels
             set { _showStructuredView = value; OnPropertyChanged(); }
         }
 
+        /// <summary>
+        /// 十六进制内容
+        /// </summary>
+        public string HexContent
+        {
+            get => _hexContent;
+            set { _hexContent = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// 是否显示十六进制视图
+        /// </summary>
+        public bool ShowHexView
+        {
+            get => _showHexView;
+            set { _showHexView = value; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Methods
@@ -148,6 +170,8 @@ namespace FileLancet.UI.ViewModels
             HasError = false;
             StructuredContent = null;
             ShowStructuredView = false;
+            HexContent = "";
+            ShowHexView = false;
         }
 
         public void UpdatePreview(FileNode node)
@@ -217,6 +241,7 @@ namespace FileLancet.UI.ViewModels
                     TextContent = result.TextContent;
                     CodeLanguage = "";
                     ShowStructuredView = false;
+                    ShowHexView = false;
                     break;
 
                 case PreviewContentType.Code:
@@ -225,6 +250,7 @@ namespace FileLancet.UI.ViewModels
                     CodeLanguage = result.CodeLanguage;
                     // 解析结构化内容
                     ParseStructuredContent(result.TextContent, result.CodeLanguage);
+                    ShowHexView = false;
                     break;
 
                 case PreviewContentType.Html:
@@ -232,23 +258,105 @@ namespace FileLancet.UI.ViewModels
                     HtmlContent = result.TextContent;
                     // HTML 也解析为结构化内容
                     ParseStructuredContent(result.TextContent, "html");
+                    ShowHexView = false;
                     break;
 
                 case PreviewContentType.Image:
                     PreviewType = PreviewType.Image;
                     LoadImageFromBytes(result.ImageData, result.ImageFormat);
+                    ShowHexView = false;
                     break;
 
                 case PreviewContentType.Binary:
                     PreviewType = PreviewType.Binary;
                     IsBinary = true;
                     BinaryInfo = result.BinaryInfo;
+                    // 显示十六进制内容
+                    if (result.ImageData != null && result.ImageData.Length > 0)
+                    {
+                        HexContent = FormatHexContent(result.ImageData);
+                        ShowHexView = true;
+                    }
+                    else
+                    {
+                        ShowHexView = false;
+                    }
                     break;
 
                 default:
                     PreviewType = PreviewType.None;
+                    ShowHexView = false;
                     break;
             }
+        }
+
+        /// <summary>
+        /// 从字节数组生成十六进制显示内容
+        /// </summary>
+        private string FormatHexContent(byte[] data)
+        {
+            if (data == null || data.Length == 0)
+                return "No data available";
+
+            var sb = new StringBuilder();
+            const int bytesPerLine = 32;
+            const int maxBytes = 16384; // 最多显示 16KB
+
+            int displayLength = Math.Min(data.Length, maxBytes);
+
+            // 表头
+            sb.Append("Offset  ");
+            for (int i = 0; i < bytesPerLine; i++)
+            {
+                sb.Append($"{i:X2} ");
+            }
+            sb.AppendLine(" ASCII");
+            // 分隔线: "Offset  "(8) + 32*"XX "(96) + " ASCII"(33) = 137
+            sb.AppendLine(new string('-', 8 + bytesPerLine * 3 + 1 + bytesPerLine));
+
+            for (int i = 0; i < displayLength; i += bytesPerLine)
+            {
+                // 偏移量 (6位十六进制)
+                sb.Append($"{i:X6}  ");
+
+                // 十六进制值
+                for (int j = 0; j < bytesPerLine; j++)
+                {
+                    if (i + j < displayLength)
+                    {
+                        sb.Append($"{data[i + j]:X2} ");
+                    }
+                    else
+                    {
+                        sb.Append("   ");
+                    }
+                }
+
+                sb.Append(" ");
+
+                // ASCII 表示
+                for (int j = 0; j < bytesPerLine && i + j < displayLength; j++)
+                {
+                    byte b = data[i + j];
+                    if (b >= 32 && b <= 126)
+                    {
+                        sb.Append((char)b);
+                    }
+                    else
+                    {
+                        sb.Append('.');
+                    }
+                }
+
+                sb.AppendLine();
+            }
+
+            if (data.Length > maxBytes)
+            {
+                sb.AppendLine($"... ({data.Length - maxBytes} more bytes)");
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
