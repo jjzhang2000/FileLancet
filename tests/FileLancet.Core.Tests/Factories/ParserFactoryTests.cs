@@ -164,7 +164,7 @@ public class ParserFactoryTests : IDisposable
     }
 
     [Fact]
-    public void TC_116_Factory_IsThreadSafe()
+    public async Task TC_116_Factory_IsThreadSafe()
     {
         // Arrange
         var parsers = new List<IFileLancetParser>();
@@ -178,7 +178,7 @@ public class ParserFactoryTests : IDisposable
             tasks.Add(Task.Run(() => ParserFactory.RegisterParser(parser)));
         }
 
-        Task.WaitAll(tasks.ToArray());
+        await Task.WhenAll(tasks);
 
         // Assert
         Assert.Equal(10, ParserFactory.GetAllParsers().Count);

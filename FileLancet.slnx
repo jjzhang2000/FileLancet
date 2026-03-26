@@ -2,8 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/FileLancet.CLI/FileLancet.CLI.csproj" />
     <Project Path="src/FileLancet.Core/FileLancet.Core.csproj" />
+    <Project Path="src/FileLancet.UI/FileLancet.UI.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FileLancet.Core.Tests/FileLancet.Core.Tests.csproj" />
+    <Project Path="tests/FileLancet.UI.Tests/FileLancet.UI.Tests.csproj" />
   </Folder>
 </Solution>
