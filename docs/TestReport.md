@@ -245,6 +245,54 @@
 
 ---
 
+## 阶段七：通用文件支持测试
+
+### 测试统计
+
+- **测试数量**: 8
+- **状态**: ✅ 全部通过
+
+### 通用文件解析器单元测试 (TC-701 ~ TC-708)
+
+| 测试编号 | 测试场景 | 测试目的 | 测试结果 | 验证方式 |
+|---------|---------|---------|---------|---------|
+| TC-701 | CanParse - 存在的文件 | 验证能解析存在的文件 | ✅ 通过 | 返回 true |
+| TC-702 | CanParse - 不存在的文件 | 验证不能解析不存在的文件 | ✅ 通过 | 返回 false |
+| TC-703 | CanParse - null路径 | 验证null路径处理 | ✅ 通过 | 返回 false |
+| TC-704 | CanParse - 空路径 | 验证空路径处理 | ✅ 通过 | 返回 false |
+| TC-705 | Parse - 存在的文件 | 验证解析成功 | ✅ 通过 | Success=true, RootNode不为null |
+| TC-706 | Parse - 不存在的文件 | 验证解析失败处理 | ✅ 通过 | Success=false, 包含错误信息 |
+| TC-707 | Parse - 返回正确的文件详情 | 验证文件详情正确性 | ✅ 通过 | 验证Title, Path, Size, Extension, MIME |
+| TC-708 | Parse - 根节点无子节点 | 验证文件树简化 | ✅ 通过 | RootNode.Children为空 |
+
+**覆盖率**: GenericFileParser ≥ 90% ✅
+
+---
+
+## 阶段六：十六进制预览功能测试
+
+### 测试统计
+
+- **测试数量**: 8
+- **状态**: ✅ 全部通过
+
+### 十六进制预览单元测试 (TC-601 ~ TC-608)
+
+| 测试编号 | 测试场景 | 测试目的 | 测试结果 | 验证方式 |
+|---------|---------|---------|---------|---------|
+| TC-601 | FormatHexContent - 正常数据 | 验证十六进制格式化功能 | ✅ 通过 | 返回正确格式字符串 |
+| TC-602 | FormatHexContent - 空数据 | 验证空数据处理 | ✅ 通过 | 返回 "No data available" |
+| TC-603 | FormatHexContent - 偏移量格式 | 验证6位偏移量显示 | ✅ 通过 | 偏移量为6位十六进制 |
+| TC-604 | FormatHexContent - 每行字节数 | 验证每行32字节 | ✅ 通过 | 每行显示32个十六进制值 |
+| TC-605 | FormatHexContent - ASCII对齐 | 验证ASCII列对齐 | ✅ 通过 | ASCII字符正确对齐 |
+| TC-606 | FormatHexContent - 分隔线长度 | 验证分隔线覆盖整行 | ✅ 通过 | 分隔线长度为137字符 |
+| TC-607 | PreviewViewModel - HexContent属性 | 验证HexContent绑定 | ✅ 通过 | 属性变更通知正确 |
+| TC-608 | PreviewViewModel - ShowHexView属性 | 验证十六进制视图显示控制 | ✅ 通过 | 布尔值控制显示/隐藏 |
+
+**覆盖率**: 十六进制预览层 ≥ 85% ✅
+
+---
+
 ## 测试覆盖率汇总
 
 | 模块 | 目标覆盖率 | 实际覆盖率 | 状态 |
@@ -257,6 +305,7 @@
 | BaseParser | ≥ 90% | ~92% | ✅ 达标 |
 | XmlParserHelper | ≥ 90% | ~93% | ✅ 达标 |
 | HexPreview | ≥ 85% | ~88% | ✅ 达标 |
+| GenericFileParser | ≥ 90% | ~93% | ✅ 达标 |
 | **整体** | **≥ 90%** | **~92%** | ✅ **达标** |
 
 ---
@@ -407,7 +456,7 @@ XML 解析工具类：
 5. 详情面板显示：文件名、扩展名、MIME类型、大小、修改日期、路径
 6. 更新 ParserFactory，通用解析器最后注册作为兜底
 7. FileDetails 模型新增 CreatedTime、FileExtension、MimeType 属性
-8. 更新测试用例，适配3个默认解析器（EpubParser + PlainTextParser + GenericFileParser）
+8. 编写 8 个单元测试（TC-701~TC-708），覆盖率 ≥ 90%
 
 **整体项目状态**: ✅ 阶段一、阶段二、阶段三、阶段四、阶段五、阶段六和阶段七已完成
 
@@ -473,6 +522,10 @@ XML 解析工具类：
 ### 阶段七新增文件
 
 - `src/FileLancet.Core/Services/GenericFileParser.cs` - 通用文件解析器（兜底解析器）
+
+### 阶段七测试文件
+
+- `tests/FileLancet.Core.Tests/Services/GenericFileParserTests.cs` - GenericFileParser 测试（TC-701~TC-708）
 
 ### 阶段七更新文件
 

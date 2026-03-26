@@ -406,8 +406,8 @@ echo   - Phase 3: 16 tests passed
 echo   - Phase 4: 16 tests passed
 echo   - Phase 5: 16 tests passed
 echo   - Phase 6: 8 tests passed
-echo   - Phase 7: Updated tests
-echo   - Total: 129+ tests passed
+echo   - Phase 7: 8 tests passed
+echo   - Total: 137 tests passed
 echo   - Coverage: approx 92%%
 echo.
 echo New Phase 5 Features
@@ -442,12 +442,26 @@ echo      - HexContent stores formatted hex string
 echo      - ShowHexView controls visibility
 echo      - Integrated with PreviewViewModel
 echo   3. FormatHexContent Method
-echo      - Handles null/empty data
-echo      - Limits to 16KB max display
-echo      - Shows printable ASCII characters
-echo      - Dots for non-printable bytes
-echo.
-echo Run Application
+   echo      - Handles null/empty data
+   echo      - Limits to 16KB max display
+   echo      - Shows printable ASCII characters
+   echo      - Dots for non-printable bytes
+   echo.
+   echo New Phase 7 Features
+   echo   1. GenericFileParser (Fallback Parser)
+   echo      - Universal file parser for any file format
+   echo      - Shows only filename in file tree (no children)
+   echo      - Hex preview as default for unsupported formats
+   echo      - Extended file info: Extension, MIME, Size, Modified date
+   echo   2. FileDetails Model Update
+   echo      - Added CreatedTime property
+   echo      - Added FileExtension property
+   echo      - Added MimeType property
+   echo   3. GenericFileParserTests
+   echo      - 8 unit tests (TC-701~TC-708)
+   echo      - Coverage >= 90%
+   echo.
+   echo Run Application
 echo   dotnet run --project src/FileLancet.UI
 dotnet run --project src/FileLancet.UI
 echo.
