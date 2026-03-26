@@ -1140,7 +1140,228 @@ public class AsyncOptimization
 
 ## 8. 附录
 
-### 8.1 依赖库
+## 6. 阶段五：XML 解析工具类
+
+### 6.1 目标
+
+针对 EPUB 解析过程中遇到的 XML 命名空间问题和 ZIP 路径兼容性问题，提取可重用的 XML 解析工具类，统一处理 XML 解析逻辑。
+
+### 6.2 问题背景
+
+在解析实际 EPUB 文件时，发现以下常见问题：
+1. **未声明的命名空间前缀**：部分 EPUB 文件使用 `dc:title` 等前缀但未声明 `xmlns:dc` 命名空间
+2. **路径格式不兼容**：ZIP 条目使用反斜杠（Windows 风格）而非正斜杠（ZIP 标准）
+3. **XML 解析重复代码**：多个解析器中都包含类似的 XML 解析和元素查找逻辑
+
+### 6.3 XmlParserHelper 设计
+
+#### 6.3.1 类职责
+
+```csharp
+/// <summary>
+/// XML 解析辅助工具类
+/// 提供统一的 XML 解析、命名空间修复、ZIP 条目查找等功能
+/// </summary>
+public static class XmlParserHelper
+{
+    /// <summary>
+    /// 解析 XML 内容，自动修复未声明的命名空间前缀
+    /// </summary>
+    public static XDocument ParseWithNamespaceFix(string xmlContent);
+    
+    /// <summary>
+    /// 从 ZIP 条目中异步加载 XML 文档
+    /// </summary>
+    public static Task<XDocument> LoadFromZipEntryAsync(ZipArchiveEntry entry, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// 在 ZIP 存档中查找条目（支持多种路径格式）
+    /// </summary>
+    public static ZipArchiveEntry GetZipEntry(ZipArchive archive, string path);
+    
+    /// <summary>
+    /// 根据本地名称获取元素（忽略命名空间）
+    /// </summary>
+    public static XElement GetFirstElementByLocalName(XDocument doc, string localName);
+    
+    /// <summary>
+    /// 根据本地名称获取元素值（忽略命名空间）
+    /// </summary>
+    public static string GetElementValueByLocalName(XDocument doc, string localName);
+    
+    /// <summary>
+    /// 获取所有匹配本地名称的元素
+    /// </summary>
+    public static IEnumerable<XElement> GetElementsByLocalName(XDocument doc, string localName);
+}
+```
+
+#### 6.3.2 命名空间自动修复策略
+
+```csharp
+/// <summary>
+/// 自动修复常见未声明的命名空间前缀
+/// </summary>
+private static string FixCommonNamespaces(string xmlContent)
+{
+    // 修复 dc: 前缀（Dublin Core 元数据）
+    if (xmlContent.Contains("<dc:") && !xmlContent.Contains("xmlns:dc"))
+    {
+        xmlContent = InsertNamespaceDeclaration(xmlContent, "dc", "http://purl.org/dc/elements/1.1/");
+    }
+    
+    // 修复 opf: 前缀（OPF 包文件）
+    if (xmlContent.Contains("<opf:") && !xmlContent.Contains("xmlns:opf"))
+    {
+        xmlContent = InsertNamespaceDeclaration(xmlContent, "opf", "http://www.idpf.org/2007/opf");
+    }
+    
+    // 修复 xhtml: 前缀
+    if (xmlContent.Contains("<xhtml:") && !xmlContent.Contains("xmlns:xhtml"))
+    {
+        xmlContent = InsertNamespaceDeclaration(xmlContent, "xhtml", "http://www.w3.org/1999/xhtml");
+    }
+    
+    return xmlContent;
+}
+```
+
+#### 6.3.3 ZIP 条目查找策略
+
+```csharp
+/// <summary>
+/// 在 ZIP 存档中查找条目，支持多种路径格式
+/// </summary>
+public static ZipArchiveEntry GetZipEntry(ZipArchive archive, string path)
+{
+    // 策略 1: 直接匹配
+    var entry = archive.GetEntry(path);
+    if (entry != null) return entry;
+    
+    // 策略 2: 路径分隔符转换（/ 转 \）
+    var altPath = path.Replace('/', '\\');
+    entry = archive.GetEntry(altPath);
+    if (entry != null) return entry;
+    
+    // 策略 3: 不区分大小写遍历查找
+    foreach (var e in archive.Entries)
+    {
+        if (e.FullName.Equals(path, StringComparison.OrdinalIgnoreCase) ||
+            e.FullName.Replace('\\', '/').Equals(path, StringComparison.OrdinalIgnoreCase))
+        {
+            return e;
+        }
+    }
+    
+    return null;
+}
+```
+
+### 6.4 阶段五测试用例
+
+#### 6.4.1 XmlParserHelper 单元测试（覆盖率 ≥ 90%）
+
+| 测试编号 | 测试场景 | 测试内容 | 验证点 |
+|---------|---------|---------|--------|
+| TC-501 | ParseWithNamespaceFix - 正常 XML | 验证正常 XML 解析 | 返回 XDocument |
+| TC-502 | ParseWithNamespaceFix - 未声明 dc 前缀 | 验证自动修复 DC 命名空间 | 成功解析并获取值 |
+| TC-503 | ParseWithNamespaceFix - 已声明 dc 前缀 | 验证不重复添加声明 | 正常解析 |
+| TC-504 | ParseWithNamespaceFix - 空内容 | 验证空内容抛出异常 | 抛出 ArgumentException |
+| TC-505 | GetZipEntry - 正斜杠路径 | 验证正斜杠路径查找 | 找到条目 |
+| TC-506 | GetZipEntry - 反斜杠路径 | 验证反斜杠路径查找 | 找到条目 |
+| TC-507 | GetZipEntry - 不区分大小写 | 验证大小写不敏感查找 | 找到条目 |
+| TC-508 | GetZipEntry - 不存在路径 | 验证不存在路径返回 null | 返回 null |
+| TC-509 | GetElementsByLocalName - 多个元素 | 验证获取多个匹配元素 | 返回所有匹配项 |
+| TC-510 | GetFirstElementByLocalName - 第一个 | 验证获取第一个匹配元素 | 返回第一个元素 |
+| TC-511 | GetFirstElementByLocalName - 不存在 | 验证不存在返回 null | 返回 null |
+| TC-512 | GetElementValueByLocalName - 获取值 | 验证获取元素值 | 返回值正确 |
+| TC-513 | GetElementValueByLocalName - 不存在 | 验证不存在返回 null | 返回 null |
+| TC-514 | LoadFromZipEntryAsync - 正常加载 | 验证从 ZIP 加载 XML | 返回 XDocument |
+| TC-515 | LoadFromZipEntryAsync - 未声明命名空间 | 验证自动修复并加载 | 成功解析 |
+| TC-516 | LoadFromZipEntryAsync - 取消操作 | 验证取消令牌 | 抛出 OperationCanceledException |
+
+### 6.5 阶段五交付物
+
+1. **代码交付**
+   - XmlParserHelper 工具类实现
+   - 命名空间自动修复功能
+   - ZIP 条目多策略查找功能
+
+2. **测试交付**
+   - XmlParserHelper 单元测试（16 个测试用例）
+   - 覆盖率报告（≥ 90%）
+
+3. **文档交付**
+   - XmlParserHelper 使用指南
+   - 常见问题处理说明
+
+---
+
+## 7. 接口汇总
+
+### 7.1 核心接口
+
+| 接口名 | 职责 | 关键方法 |
+|-------|------|---------|
+| IFileLancetParser | 文件解析器 | CanParse, Parse, ParseAsync |
+| IContentLoader | 内容加载 | LoadContentAsync, LoadTextAsync |
+| IPreviewService | 预览服务 | GetPreviewAsync |
+
+### 7.2 数据模型
+
+| 类名 | 职责 | 关键属性 |
+|-----|------|---------|
+| FileNode | 文件树节点 | Name, Path, Type, Children |
+| FileDetails | 文件详情 | Title, Authors, FileSize, Metadata |
+| ParseResult | 解析结果 | Success, RootNode, Details |
+
+### 7.3 视图模型
+
+| 类名 | 职责 | 关键属性 |
+|-----|------|---------|
+| MainViewModel | 主窗口 VM | FileTreeNodes, SelectedNode, Commands |
+| NodeDetailsViewModel | 详情面板 VM | Properties, Metadata |
+| PreviewViewModel | 预览面板 VM | PreviewType, Content |
+
+### 7.4 工具类
+
+| 类名 | 职责 | 关键方法 |
+|-----|------|---------|
+| XmlParserHelper | XML 解析辅助 | ParseWithNamespaceFix, GetZipEntry, GetElementValueByLocalName |
+| PerformanceOptimizer | 性能优化 | CreateCache, MonitorMemory, ThrottleAsync |
+
+---
+
+## 8. 开发规范
+
+### 8.1 命名规范
+
+- **类名**: PascalCase (如 `FileNode`, `EpubParser`)
+- **接口名**: PascalCase + I 前缀 (如 `IFileLancetParser`)
+- **方法名**: PascalCase (如 `ParseAsync`, `LoadContent`)
+- **属性名**: PascalCase (如 `FileSize`, `SelectedNode`)
+- **字段名**: _camelCase (如 `_selectedNode`, `_entryCache`)
+- **常量名**: UPPER_SNAKE_CASE
+
+### 8.2 异步规范
+
+- 所有 IO 操作必须使用异步方法
+- 异步方法名以 Async 结尾
+- 使用 CancellationToken 支持取消
+- 避免 async void
+
+### 8.3 异常处理
+
+- 使用自定义异常类
+- 异常信息需本地化
+- 记录异常日志
+- 不向用户暴露敏感信息
+
+---
+
+## 9. 附录
+
+### 9.1 依赖库
 
 | 库名 | 用途 | 版本 |
 |-----|------|------|

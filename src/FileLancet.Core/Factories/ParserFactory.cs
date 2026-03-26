@@ -70,6 +70,7 @@ public static class ParserFactory
         {
             _parsers.Clear();
             RegisterParser(new EpubParser());
+            RegisterParser(new PlainTextParser());
         }
     }
 }

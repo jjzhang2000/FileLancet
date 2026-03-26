@@ -1,8 +1,12 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using FileLancet.Core.Interfaces;
 using FileLancet.Core.Models;
+using FileLancet.Core.Utilities;
 
 namespace FileLancet.UI.ViewModels
 {
@@ -15,7 +19,9 @@ namespace FileLancet.UI.ViewModels
         Text,
         Html,
         Image,
-        Binary
+        Binary,
+        Code,
+        StructuredCode
     }
 
     /// <summary>
@@ -30,6 +36,12 @@ namespace FileLancet.UI.ViewModels
         private bool _isBinary;
         private string _binaryInfo = "";
         private string _previewTitle = "Preview";
+        private string _codeLanguage = "";
+        private bool _isLoading;
+        private string _errorMessage = "";
+        private bool _hasError;
+        private CodeStructureNode? _structuredContent;
+        private bool _showStructuredView = false;
 
         #region Properties
 
@@ -75,6 +87,48 @@ namespace FileLancet.UI.ViewModels
             set { _previewTitle = value; OnPropertyChanged(); }
         }
 
+        public string CodeLanguage
+        {
+            get => _codeLanguage;
+            set { _codeLanguage = value; OnPropertyChanged(); }
+        }
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set { _isLoading = value; OnPropertyChanged(); }
+        }
+
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set { _errorMessage = value; OnPropertyChanged(); }
+        }
+
+        public bool HasError
+        {
+            get => _hasError;
+            set { _hasError = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// 结构化内容（用于树状显示）
+        /// </summary>
+        public CodeStructureNode? StructuredContent
+        {
+            get => _structuredContent;
+            set { _structuredContent = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// 是否显示结构化视图
+        /// </summary>
+        public bool ShowStructuredView
+        {
+            get => _showStructuredView;
+            set { _showStructuredView = value; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Methods
@@ -88,6 +142,12 @@ namespace FileLancet.UI.ViewModels
             IsBinary = false;
             BinaryInfo = "";
             PreviewTitle = "Preview";
+            CodeLanguage = "";
+            IsLoading = false;
+            ErrorMessage = "";
+            HasError = false;
+            StructuredContent = null;
+            ShowStructuredView = false;
         }
 
         public void UpdatePreview(FileNode node)
@@ -131,19 +191,134 @@ namespace FileLancet.UI.ViewModels
             }
         }
 
-        private void LoadImagePlaceholder(FileNode node)
+        /// <summary>
+        /// 使用预览结果更新预览
+        /// </summary>
+        public void UpdateFromPreviewResult(PreviewResult result)
         {
-            // 创建一个占位符图像
+            IsLoading = false;
+
+            if (!result.Success)
+            {
+                // 预览失败时清空内容，避免显示前一元素内容
+                Clear();
+                HasError = true;
+                ErrorMessage = result.ErrorMessage;
+                return;
+            }
+
+            HasError = false;
+            ErrorMessage = "";
+
+            switch (result.ContentType)
+            {
+                case PreviewContentType.Text:
+                    PreviewType = PreviewType.Text;
+                    TextContent = result.TextContent;
+                    CodeLanguage = "";
+                    ShowStructuredView = false;
+                    break;
+
+                case PreviewContentType.Code:
+                    PreviewType = PreviewType.Code;
+                    TextContent = result.TextContent;
+                    CodeLanguage = result.CodeLanguage;
+                    // 解析结构化内容
+                    ParseStructuredContent(result.TextContent, result.CodeLanguage);
+                    break;
+
+                case PreviewContentType.Html:
+                    PreviewType = PreviewType.Html;
+                    HtmlContent = result.TextContent;
+                    // HTML 也解析为结构化内容
+                    ParseStructuredContent(result.TextContent, "html");
+                    break;
+
+                case PreviewContentType.Image:
+                    PreviewType = PreviewType.Image;
+                    LoadImageFromBytes(result.ImageData, result.ImageFormat);
+                    break;
+
+                case PreviewContentType.Binary:
+                    PreviewType = PreviewType.Binary;
+                    IsBinary = true;
+                    BinaryInfo = result.BinaryInfo;
+                    break;
+
+                default:
+                    PreviewType = PreviewType.None;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 解析结构化内容
+        /// </summary>
+        private void ParseStructuredContent(string content, string language)
+        {
             try
             {
-                var bitmap = new WriteableBitmap(100, 100, 96, 96, PixelFormats.Gray8, null);
+                CodeStructureNode? structure = language.ToLowerInvariant() switch
+                {
+                    "xml" or "html" or "xhtml" => CodeStructureParser.ParseXml(content),
+                    "css" => CodeStructureParser.ParseCss(content),
+                    _ => null
+                };
+
+                if (structure != null && structure.Children.Count > 0)
+                {
+                    StructuredContent = structure;
+                    ShowStructuredView = true;
+                }
+                else
+                {
+                    ShowStructuredView = false;
+                }
+            }
+            catch
+            {
+                ShowStructuredView = false;
+            }
+        }
+
+        private void LoadImagePlaceholder(FileNode node)
+        {
+            try
+            {
+                var bitmap = new WriteableBitmap(100, 100, 96, 96, System.Windows.Media.PixelFormats.Gray8, null);
                 ImageContent = bitmap;
             }
             catch
             {
-                // 如果无法创建图像，显示文本信息
                 PreviewType = PreviewType.Text;
                 TextContent = $"[Image: {node.Name}]\nSize: {node.Size} bytes";
+            }
+        }
+
+        private void LoadImageFromBytes(byte[]? imageData, string format)
+        {
+            if (imageData == null || imageData.Length == 0)
+            {
+                PreviewType = PreviewType.Binary;
+                BinaryInfo = "Unable to load image data";
+                return;
+            }
+
+            try
+            {
+                using var stream = new MemoryStream(imageData);
+                BitmapImage bitmap = new();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = stream;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                ImageContent = bitmap;
+            }
+            catch (Exception ex)
+            {
+                PreviewType = PreviewType.Binary;
+                BinaryInfo = $"Error loading image: {ex.Message}";
             }
         }
 

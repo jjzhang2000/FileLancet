@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Xml.Linq;
 using FileLancet.Core.Interfaces;
 using FileLancet.Core.Models;
+using FileLancet.Core.Utilities;
 
 namespace FileLancet.Core.Services;
 
@@ -23,7 +24,8 @@ public class EpubParser : IFileLancetParser
         {
             using var stream = File.OpenRead(filePath);
             using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-            var containerEntry = archive.GetEntry("META-INF/container.xml");
+            // 使用 XmlParserHelper 获取条目（支持多种路径格式）
+            var containerEntry = XmlParserHelper.GetZipEntry(archive, "META-INF/container.xml");
             return containerEntry != null;
         }
         catch
@@ -71,7 +73,7 @@ public class EpubParser : IFileLancetParser
             };
 
             // 读取 container.xml 获取 OPF 路径
-            var containerEntry = archive.GetEntry("META-INF/container.xml");
+            var containerEntry = XmlParserHelper.GetZipEntry(archive, "META-INF/container.xml");
             if (containerEntry == null)
             {
                 return new ParseResult
@@ -83,12 +85,21 @@ public class EpubParser : IFileLancetParser
             }
 
             string opfPath;
-            using (var containerStream = containerEntry.Open())
+            try
             {
-                var containerDoc = await XDocument.LoadAsync(containerStream, LoadOptions.None, cancellationToken);
+                var containerDoc = await XmlParserHelper.LoadFromZipEntryAsync(containerEntry, cancellationToken);
                 var ns = containerDoc.Root?.GetDefaultNamespace() ?? XNamespace.None;
                 var rootfile = containerDoc.Root?.Element(ns + "rootfiles")?.Element(ns + "rootfile");
                 opfPath = rootfile?.Attribute("full-path")?.Value ?? "";
+            }
+            catch (Exception ex)
+            {
+                return new ParseResult
+                {
+                    Success = false,
+                    ErrorMessage = $"解析 container.xml 失败: {ex.Message}",
+                    SourcePath = filePath
+                };
             }
 
             if (string.IsNullOrEmpty(opfPath))
@@ -102,21 +113,38 @@ public class EpubParser : IFileLancetParser
             }
 
             // 解析 OPF 文件
-            var opfEntry = archive.GetEntry(opfPath.Replace("\\", "/"));
+            var opfEntry = XmlParserHelper.GetZipEntry(archive, opfPath);
+            
             if (opfEntry == null)
+            {
+                // 尝试在根目录下查找 .opf 文件
+                opfEntry = archive.Entries.FirstOrDefault(e => 
+                    e.FullName.EndsWith(".opf", StringComparison.OrdinalIgnoreCase));
+                
+                if (opfEntry == null)
+                {
+                    return new ParseResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"未找到 OPF 文件: {opfPath}",
+                        SourcePath = filePath
+                    };
+                }
+            }
+
+            XDocument opfDoc;
+            try
+            {
+                opfDoc = await XmlParserHelper.LoadFromZipEntryAsync(opfEntry, cancellationToken);
+            }
+            catch (Exception ex)
             {
                 return new ParseResult
                 {
                     Success = false,
-                    ErrorMessage = $"未找到 OPF 文件: {opfPath}",
+                    ErrorMessage = $"解析 OPF 文件失败: {ex.Message}",
                     SourcePath = filePath
                 };
-            }
-
-            XDocument opfDoc;
-            using (var opfStream = opfEntry.Open())
-            {
-                opfDoc = await XDocument.LoadAsync(opfStream, LoadOptions.None, cancellationToken);
             }
 
             // 提取元数据
@@ -152,20 +180,18 @@ public class EpubParser : IFileLancetParser
 
     private void ExtractMetadata(XDocument opfDoc, FileDetails details)
     {
-        var packageNs = opfDoc.Root?.GetDefaultNamespace() ?? XNamespace.None;
-        var metadata = opfDoc.Root?.Element(packageNs + "metadata");
+        // 使用 XmlParserHelper 获取 metadata 元素
+        var metadata = XmlParserHelper.GetFirstElementByLocalName(opfDoc, "metadata");
         if (metadata == null) return;
 
-        // DC 命名空间
-        var dcNs = metadata.GetNamespaceOfPrefix("dc") ?? XNamespace.None;
-
+        // 使用本地名称（忽略命名空间）来查找元素
         // 标题
-        var title = metadata.Element(dcNs + "title")?.Value;
+        var title = XmlParserHelper.GetElementValueByLocalName(metadata, "title");
         if (!string.IsNullOrEmpty(title))
             details.Title = title;
 
         // 作者
-        var creators = metadata.Elements(dcNs + "creator");
+        var creators = XmlParserHelper.GetElementsByLocalName(metadata, "creator");
         foreach (var creator in creators)
         {
             var name = creator.Value;
@@ -174,22 +200,22 @@ public class EpubParser : IFileLancetParser
         }
 
         // 出版社
-        var publisher = metadata.Element(dcNs + "publisher")?.Value;
+        var publisher = XmlParserHelper.GetElementValueByLocalName(metadata, "publisher");
         if (!string.IsNullOrEmpty(publisher))
             details.Publisher = publisher;
 
         // 语言
-        var language = metadata.Element(dcNs + "language")?.Value;
+        var language = XmlParserHelper.GetElementValueByLocalName(metadata, "language");
         if (!string.IsNullOrEmpty(language))
             details.Language = language;
 
         // ISBN
-        var identifier = metadata.Element(dcNs + "identifier")?.Value;
+        var identifier = XmlParserHelper.GetElementValueByLocalName(metadata, "identifier");
         if (!string.IsNullOrEmpty(identifier))
             details.Isbn = identifier;
 
         // 描述
-        var description = metadata.Element(dcNs + "description")?.Value;
+        var description = XmlParserHelper.GetElementValueByLocalName(metadata, "description");
         if (!string.IsNullOrEmpty(description))
             details.Description = description;
 

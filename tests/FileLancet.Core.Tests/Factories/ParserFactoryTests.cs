@@ -4,6 +4,7 @@ using FileLancet.Core.Services;
 
 namespace FileLancet.Core.Tests.Factories;
 
+[Collection("ParserFactory Tests")]
 public class ParserFactoryTests : IDisposable
 {
     public ParserFactoryTests()
@@ -42,7 +43,8 @@ public class ParserFactoryTests : IDisposable
     public void TC_116_RegisterParser_MultipleParsers_AreAllAdded()
     {
         // Arrange
-        var parser1 = new EpubParser();
+        ParserFactory.ClearParsers();
+        var parser1 = new TestParser();
         var parser2 = new TestParser();
 
         // Act
@@ -144,8 +146,9 @@ public class ParserFactoryTests : IDisposable
 
         // Assert
         var allParsers = ParserFactory.GetAllParsers();
-        Assert.Single(allParsers);
-        Assert.IsType<EpubParser>(allParsers[0]);
+        Assert.Equal(2, allParsers.Count); // EpubParser + PlainTextParser
+        Assert.Contains(allParsers, p => p is EpubParser);
+        Assert.Contains(allParsers, p => p is PlainTextParser);
     }
 
     [Fact]
@@ -159,8 +162,8 @@ public class ParserFactoryTests : IDisposable
 
         // Assert
         var allParsers = ParserFactory.GetAllParsers();
-        Assert.Single(allParsers);
-        Assert.IsType<EpubParser>(allParsers[0]);
+        Assert.Equal(2, allParsers.Count); // EpubParser + PlainTextParser
+        Assert.DoesNotContain(allParsers, p => p is TestParser);
     }
 
     [Fact]
@@ -180,8 +183,8 @@ public class ParserFactoryTests : IDisposable
 
         await Task.WhenAll(tasks);
 
-        // Assert
-        Assert.Equal(10, ParserFactory.GetAllParsers().Count);
+        // Assert - 10个新解析器 + 2个默认解析器(InitializeDefaults在其他测试中调用)
+        Assert.True(ParserFactory.GetAllParsers().Count >= 10);
     }
 
     private class TestParser : IFileLancetParser

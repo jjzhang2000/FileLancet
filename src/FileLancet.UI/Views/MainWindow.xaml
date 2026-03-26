@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:FileLancet.UI.ViewModels"
-        Title="File Lancet - EPUB Analyzer" 
+        xmlns:converters="clr-namespace:FileLancet.UI.Converters"
+        Title="File Lancet - File Analyzer" 
         Height="800" 
         Width="1400"
         MinHeight="600"
@@ -15,39 +16,26 @@
         <vm:MainViewModel />
     </Window.DataContext>
 
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Menu Bar -->
-        <Menu Grid.Row="0" IsMainMenu="True">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open..." Command="{Binding OpenFileCommand}" InputGestureText="Ctrl+O"/>
-                <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" InputGestureText="F5"/>
-                <Separator/>
-                <MenuItem Header="E_xport..." Command="{Binding ExportCommand}"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About" Click="AboutMenuItem_Click"/>
-            </MenuItem>
-        </Menu>
-
         <!-- Toolbar -->
-        <ToolBar Grid.Row="1" Height="35">
-            <Button Content="Open" Command="{Binding OpenFileCommand}" Padding="10,2"/>
-            <Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="10,2" Margin="5,0,0,0"/>
-            <Separator Margin="10,0"/>
-            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="10,0"/>
+        <ToolBar Grid.Row="0" Height="35">
+            <Button Content="Open" Command="{Binding OpenFileCommand}" Padding="15,5"/>
+            <Button Content="About" Click="AboutMenuItem_Click" Padding="15,5" Margin="5,0,0,0"/>
         </ToolBar>
 
         <!-- Main Content - Three Column Layout -->
-        <Grid Grid.Row="2" Margin="5">
+        <Grid Grid.Row="1" Margin="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" MinWidth="200" MaxWidth="500"/>
                 <ColumnDefinition Width="Auto"/>
@@ -57,14 +45,14 @@
             </Grid.ColumnDefinitions>
 
             <!-- Left Column: File Tree -->
-            <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="1" Margin="2">
+            <Border Grid.Column="0" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="File Structure" FontWeight="Bold" Padding="5" Background="LightGray"/>
+                    <TextBlock Grid.Row="0" Text="File Structure" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
                     
                     <TreeView Grid.Row="1" 
                               ItemsSource="{Binding FileTreeNodes}"
@@ -86,10 +74,12 @@
             </Border>
 
             <!-- Splitter 1 -->
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="LightGray"/>
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" 
+                          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                          ShowsPreview="False"/>
 
             <!-- Middle Column: Details -->
-            <Border Grid.Column="2" BorderBrush="Gray" BorderThickness="1" Margin="2">
+            <Border Grid.Column="2" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -97,7 +87,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="Details" FontWeight="Bold" Padding="5" Background="LightGray"/>
+                    <TextBlock Grid.Row="0" Text="Details" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
                     
                     <!-- Basic Info -->
                     <Grid Grid.Row="1" Margin="5">
@@ -161,42 +151,88 @@
             </Border>
 
             <!-- Splitter 2 -->
-            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="LightGray"/>
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch" 
+                          Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                          ShowsPreview="False"/>
 
             <!-- Right Column: Preview -->
-            <Border Grid.Column="4" BorderBrush="Gray" BorderThickness="1" Margin="2">
+            <Border Grid.Column="4" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Margin="1">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="{Binding Preview.PreviewTitle}" FontWeight="Bold" Padding="5" Background="LightGray"/>
+                    <TextBlock Grid.Row="0" Text="{Binding Preview.PreviewTitle}" FontWeight="Bold" Padding="5" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
                     
-                    <!-- Text Preview -->
-                    <TextBox Grid.Row="1" 
+                    <!-- Text Preview (for plain text only) -->
+                    <TextBox Grid.Row="2" 
                              Text="{Binding Preview.TextContent}" 
                              IsReadOnly="True"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto"
                              FontFamily="Consolas"
-                             Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Text}"/>
+                             Visibility="{Binding Preview.ShowStructuredView, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                    
+                    <!-- Structured Code Preview (TreeView) -->
+                    <TreeView Grid.Row="2" 
+                              ItemsSource="{Binding Preview.StructuredContent.Children}"
+                              Visibility="{Binding Preview.ShowStructuredView, Converter={StaticResource BooleanToVisibilityConverter}}"
+                              VirtualizingStackPanel.IsVirtualizing="True"
+                              VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding DisplayText}" 
+                                                   FontFamily="Consolas"
+                                                   FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="Black"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding NodeType}" Value="Element">
+                                                            <Setter Property="Foreground" Value="Blue"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding NodeType}" Value="Text">
+                                                            <Setter Property="Foreground" Value="DarkGreen"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding NodeType}" Value="Comment">
+                                                            <Setter Property="Foreground" Value="Gray"/>
+                                                            <Setter Property="FontStyle" Value="Italic"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding NodeType}" Value="CssRule">
+                                                            <Setter Property="Foreground" Value="DarkBlue"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding NodeType}" Value="CssProperty">
+                                                            <Setter Property="Foreground" Value="DarkCyan"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
                     
                     <!-- Image Preview -->
-                    <Image Grid.Row="1" 
+                    <Image Grid.Row="2" 
                            Source="{Binding Preview.ImageContent}" 
                            Stretch="Uniform"
                            Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Image}"/>
                     
                     <!-- Binary Preview -->
-                    <TextBlock Grid.Row="1" 
+                    <TextBlock Grid.Row="2" 
                                Text="{Binding Preview.BinaryInfo}" 
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Binary}"/>
                     
                     <!-- Empty/None Preview -->
-                    <TextBlock Grid.Row="1" 
+                    <TextBlock Grid.Row="2" 
                                Text="Select a file to preview"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
@@ -207,7 +243,7 @@
         </Grid>
 
         <!-- Status Bar -->
-        <StatusBar Grid.Row="3">
+        <StatusBar Grid.Row="2">
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusMessage}"/>
             </StatusBarItem>

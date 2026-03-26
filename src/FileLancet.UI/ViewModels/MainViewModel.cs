@@ -4,7 +4,9 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using FileLancet.Core.Factories;
+using FileLancet.Core.Interfaces;
 using FileLancet.Core.Models;
+using FileLancet.Core.Services;
 using Microsoft.Win32;
 
 namespace FileLancet.UI.ViewModels
@@ -19,6 +21,8 @@ namespace FileLancet.UI.ViewModels
         private string _filePath = "";
         private bool _isLoading;
         private FileDetails? _fileDetails;
+        private IContentLoader? _contentLoader;
+        private readonly IPreviewService _previewService;
 
         public MainViewModel()
         {
@@ -26,6 +30,7 @@ namespace FileLancet.UI.ViewModels
             FileTreeNodes = new ObservableCollection<FileNode>();
             NodeDetails = new NodeDetailsViewModel();
             Preview = new PreviewViewModel();
+            _previewService = new PreviewService();
 
             OpenFileCommand = new RelayCommand(OpenFile);
             RefreshCommand = new RelayCommand(Refresh, () => !string.IsNullOrEmpty(FilePath));
@@ -52,7 +57,7 @@ namespace FileLancet.UI.ViewModels
                     _selectedNode = value;
                     OnPropertyChanged();
                     UpdateNodeDetails();
-                    UpdatePreview();
+                    _ = UpdatePreviewAsync();
                 }
             }
         }
@@ -171,6 +176,12 @@ namespace FileLancet.UI.ViewModels
                 StatusMessage = "Loading...";
                 FilePath = filePath;
 
+                // 释放旧的内容加载器
+                if (_contentLoader is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+
                 var parser = ParserFactory.GetParser(filePath);
                 if (parser == null)
                 {
@@ -188,6 +199,10 @@ namespace FileLancet.UI.ViewModels
                         FileTreeNodes.Add(result.RootNode);
                     }
                     FileDetails = result.Details;
+
+                    // 创建新的内容加载器
+                    _contentLoader = new EpubContentLoader(filePath);
+
                     StatusMessage = $"Loaded: {Path.GetFileName(filePath)}";
                 }
                 else
@@ -221,7 +236,6 @@ namespace FileLancet.UI.ViewModels
         /// </summary>
         private void Export()
         {
-            // TODO: Implement export functionality
             StatusMessage = "Export not implemented yet";
         }
 
@@ -263,9 +277,9 @@ namespace FileLancet.UI.ViewModels
         }
 
         /// <summary>
-        /// 更新预览
+        /// 异步更新预览
         /// </summary>
-        private void UpdatePreview()
+        private async Task UpdatePreviewAsync()
         {
             if (SelectedNode == null)
             {
@@ -273,7 +287,31 @@ namespace FileLancet.UI.ViewModels
                 return;
             }
 
-            Preview.UpdatePreview(SelectedNode);
+            // 先清空之前的内容，避免前一元素预览残留
+            Preview.Clear();
+
+            if (_contentLoader == null)
+            {
+                // 没有内容加载器时，使用默认预览
+                Preview.UpdatePreview(SelectedNode);
+                return;
+            }
+
+            Preview.IsLoading = true;
+            Preview.PreviewTitle = $"Preview: {SelectedNode.Name}";
+
+            try
+            {
+                var result = await _previewService.GetPreviewAsync(SelectedNode, _contentLoader);
+                Preview.UpdateFromPreviewResult(result);
+            }
+            catch (Exception ex)
+            {
+                // 发生异常时清空预览，避免显示前一元素内容
+                Preview.Clear();
+                Preview.HasError = true;
+                Preview.ErrorMessage = $"Preview error: {ex.Message}";
+            }
         }
 
         /// <summary>
