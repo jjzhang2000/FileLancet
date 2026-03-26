@@ -52,7 +52,7 @@ namespace FileLancet.Core.Tests.Services
         public void TC_703_CanParse_NullPath_ReturnsFalse()
         {
             // Act
-            var result = _parser.CanParse(null);
+            var result = _parser.CanParse(null!);
 
             // Assert
             Assert.False(result);
