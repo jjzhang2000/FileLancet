@@ -205,7 +205,9 @@ namespace FileLancet.UI.ViewModels
                     FileDetails = result.Details;
 
                     // 创建新的内容加载器
-                    _contentLoader = new EpubContentLoader(filePath);
+                    _contentLoader = _isGenericFile 
+                        ? new GenericContentLoader(filePath)
+                        : new EpubContentLoader(filePath);
 
                     StatusMessage = $"Loaded: {Path.GetFileName(filePath)}";
                 }
