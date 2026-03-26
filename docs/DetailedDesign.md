@@ -1107,7 +1107,7 @@ public class AsyncOptimization
 |-----|------|---------|
 | MainViewModel | 主窗口 VM | FileTreeNodes, SelectedNode, Commands |
 | NodeDetailsViewModel | 详情面板 VM | Properties, Metadata |
-| PreviewViewModel | 预览面板 VM | PreviewType, Content |
+| PreviewViewModel | 预览面板 VM | PreviewType, Content, HexContent, ShowHexView |
 
 ---
 
@@ -1294,6 +1294,198 @@ public static ZipArchiveEntry GetZipEntry(ZipArchive archive, string path)
 3. **文档交付**
    - XmlParserHelper 使用指南
    - 常见问题处理说明
+
+---
+
+## 6. 阶段六：十六进制预览与布局优化（续）
+
+### 6.6 布局优化设计
+
+#### 6.6.1 新布局结构
+
+将原来的三栏布局（左-中-右）改为双栏布局：
+- **左栏**：文件树（上）+ 详情面板（下），上下堆叠
+- **右栏**：内容预览区（加宽）
+
+```xml
+<Grid Grid.Row="1" Margin="5">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="350" MinWidth="250" MaxWidth="500"/>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*" MinWidth="500"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- 左栏：文件树 + 详情面板（上下布局） -->
+    <Grid Grid.Column="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="200"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="250" MinHeight="150" MaxHeight="400"/>
+        </Grid.RowDefinitions>
+
+        <!-- 上部：文件树 -->
+        <Border Grid.Row="0">
+            <TreeView ItemsSource="{Binding FileTreeNodes}"
+                      SelectedItemChanged="TreeView_SelectedItemChanged"/>
+        </Border>
+
+        <!-- 分隔线 -->
+        <GridSplitter Grid.Row="1" Height="4"/>
+
+        <!-- 下部：详情面板 -->
+        <Border Grid.Row="2">
+            <!-- 详情内容 -->
+        </Border>
+    </Grid>
+
+    <!-- 分隔线 -->
+    <GridSplitter Grid.Column="1" Width="4"/>
+
+    <!-- 右栏：预览（加宽） -->
+    <Border Grid.Column="2">
+        <!-- 预览内容 -->
+    </Border>
+</Grid>
+```
+
+#### 6.6.2 界面简化
+
+- **工具栏**：仅保留 Open 和 About 两个按钮
+- **状态栏**：移除重复的状态显示，仅保留文件路径
+- **About 对话框**：更新为 "File Analyzer"，版本号 0.1
+
+### 6.7 十六进制预览设计
+
+#### 6.7.1 FormatHexContent 方法
+
+```csharp
+/// <summary>
+/// 从字节数组生成十六进制显示内容
+/// </summary>
+private string FormatHexContent(byte[] data)
+{
+    if (data == null || data.Length == 0)
+        return "No data available";
+
+    var sb = new StringBuilder();
+    const int bytesPerLine = 32;
+    const int maxBytes = 16384; // 最多显示 16KB
+
+    int displayLength = Math.Min(data.Length, maxBytes);
+
+    // 表头
+    sb.Append("Offset  ");
+    for (int i = 0; i < bytesPerLine; i++)
+    {
+        sb.Append($"{i:X2} ");
+    }
+    sb.AppendLine(" ASCII");
+    sb.AppendLine(new string('-', 137));
+
+    for (int i = 0; i < displayLength; i += bytesPerLine)
+    {
+        // 偏移量 (6位十六进制)
+        sb.Append($"{i:X6}  ");
+
+        // 十六进制值
+        for (int j = 0; j < bytesPerLine; j++)
+        {
+            if (i + j < displayLength)
+                sb.Append($"{data[i + j]:X2} ");
+            else
+                sb.Append("   ");
+        }
+
+        sb.Append(" ");
+
+        // ASCII 表示
+        for (int j = 0; j < bytesPerLine && i + j < displayLength; j++)
+        {
+            byte b = data[i + j];
+            sb.Append(b >= 32 && b <= 126 ? (char)b : '.');
+        }
+
+        sb.AppendLine();
+    }
+
+    if (data.Length > maxBytes)
+        sb.AppendLine($"... ({data.Length - maxBytes} more bytes)");
+
+    return sb.ToString();
+}
+```
+
+#### 6.7.2 预览视图模型更新
+
+```csharp
+public class PreviewViewModel : INotifyPropertyChanged
+{
+    // 新增属性
+    public string HexContent { get; set; }
+    public bool ShowHexView { get; set; }
+    
+    // 更新预览结果处理
+    public void UpdateFromPreviewResult(PreviewResult result)
+    {
+        // ... 其他处理 ...
+        
+        if (result.ContentType == PreviewContentType.Binary)
+        {
+            if (result.ImageData != null && result.ImageData.Length > 0)
+            {
+                HexContent = FormatHexContent(result.ImageData);
+                ShowHexView = true;
+            }
+        }
+    }
+}
+```
+
+#### 6.7.3 UI 控件
+
+```xml
+<!-- 十六进制预览 -->
+<TextBox Grid.Row="1" 
+         Text="{Binding Preview.HexContent}" 
+         IsReadOnly="True"
+         VerticalScrollBarVisibility="Auto"
+         HorizontalScrollBarVisibility="Auto"
+         FontFamily="Consolas, Courier New, monospace"
+         FontSize="12"
+         Visibility="{Binding Preview.ShowHexView, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+```
+
+### 6.8 阶段六测试用例
+
+#### 6.8.1 十六进制预览单元测试（覆盖率 ≥ 85%）
+
+| 测试编号 | 测试场景 | 测试内容 | 验证点 |
+|---------|---------|---------|--------|
+| TC-601 | FormatHexContent - 正常数据 | 验证十六进制格式化 | 返回正确格式字符串 |
+| TC-602 | FormatHexContent - 空数据 | 验证空数据处理 | 返回 "No data available" |
+| TC-603 | FormatHexContent - 偏移量 | 验证6位偏移量 | 偏移量为6位十六进制 |
+| TC-604 | FormatHexContent - 每行字节 | 验证每行32字节 | 每行显示32个十六进制值 |
+| TC-605 | FormatHexContent - ASCII对齐 | 验证ASCII列对齐 | ASCII字符正确对齐 |
+| TC-606 | FormatHexContent - 分隔线 | 验证分隔线长度 | 分隔线长度为137字符 |
+| TC-607 | PreviewViewModel - HexContent | 验证属性绑定 | 属性变更通知正确 |
+| TC-608 | PreviewViewModel - ShowHexView | 验证显示控制 | 布尔值控制显示/隐藏 |
+
+### 6.9 阶段六交付物
+
+1. **代码交付**
+   - 优化后的双栏布局界面
+   - FormatHexContent 方法实现
+   - HexContent 和 ShowHexView 属性
+   - 更新的 PreviewService 二进制预览逻辑
+
+2. **测试交付**
+   - 十六进制预览单元测试（8 个测试用例）
+   - 覆盖率报告（≥ 85%）
+
+3. **文档交付**
+   - 更新的需求文档
+   - 更新的设计文档
+   - 更新的测试报告
 
 ---
 

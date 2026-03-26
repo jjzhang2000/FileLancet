@@ -420,6 +420,10 @@ XML 解析工具类：
 - `src/FileLancet.UI/Views/MainWindow.xaml.cs` - 添加拖拽支持
 - `src/FileLancet.UI/App.xaml.cs` - 添加命令行参数支持
 
+### 阶段三 UI 更新
+
+- `src/FileLancet.UI/Views/MainWindow.xaml` - 三栏式布局（文件树、详情、预览）
+
 ### 阶段三测试文件
 
 - `tests/FileLancet.Core.Tests/Services/ContentLoaderTests.cs` - 内容加载器和预览服务测试（TC-301~TC-316）
@@ -446,7 +450,9 @@ XML 解析工具类：
 ### 阶段六新增功能
 
 - `src/FileLancet.UI/ViewModels/PreviewViewModel.cs` - 添加 FormatHexContent 方法和 HexContent/ShowHexView 属性
-- `src/FileLancet.UI/Views/MainWindow.xaml` - 添加十六进制预览 TextBox 控件
+- `src/FileLancet.UI/Views/MainWindow.xaml` - 双栏布局（文件树+详情、预览），添加十六进制预览 TextBox 控件
+- `src/FileLancet.Core/Services/PreviewService.cs` - 更新二进制预览逻辑，加载字节数据
+- `src/FileLancet.Core/Interfaces/IPreviewService.cs` - Binary 方法添加 data 参数
 
 ### 阶段六测试文件
 
