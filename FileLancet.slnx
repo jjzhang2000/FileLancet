@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FileLancet.CLI/FileLancet.CLI.csproj" />
+    <Project Path="src/FileLancet.Core/FileLancet.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FileLancet.Core.Tests/FileLancet.Core.Tests.csproj" />
+  </Folder>
+</Solution>
