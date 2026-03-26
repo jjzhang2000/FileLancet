@@ -71,6 +71,8 @@ public static class ParserFactory
             _parsers.Clear();
             RegisterParser(new EpubParser());
             RegisterParser(new PlainTextParser());
+            // 通用解析器作为兜底，必须最后注册
+            RegisterParser(new GenericFileParser());
         }
     }
 }

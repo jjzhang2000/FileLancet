@@ -106,6 +106,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="Bold" Margin="2"/>
@@ -114,11 +117,20 @@
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontWeight="Bold" Margin="2"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding NodeDetails.NodeType}" Margin="2"/>
                             
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Size:" FontWeight="Bold" Margin="2"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NodeDetails.FileSize}" Margin="2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Extension:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NodeDetails.FileExtension}" Margin="2"/>
                             
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Path:" FontWeight="Bold" Margin="2"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NodeDetails.NodePath}" Margin="2" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="MIME:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NodeDetails.MimeType}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Size:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding NodeDetails.FileSize}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding NodeDetails.LastModified}" Margin="2"/>
+                            
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Path:" FontWeight="Bold" Margin="2"/>
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding NodeDetails.NodePath}" Margin="2" TextWrapping="Wrap"/>
                         </Grid>
                         
                         <!-- EPUB Metadata -->

@@ -146,9 +146,10 @@ public class ParserFactoryTests : IDisposable
 
         // Assert
         var allParsers = ParserFactory.GetAllParsers();
-        Assert.Equal(2, allParsers.Count); // EpubParser + PlainTextParser
+        Assert.Equal(3, allParsers.Count); // EpubParser + PlainTextParser + GenericFileParser
         Assert.Contains(allParsers, p => p is EpubParser);
         Assert.Contains(allParsers, p => p is PlainTextParser);
+        Assert.Contains(allParsers, p => p is GenericFileParser);
     }
 
     [Fact]
@@ -162,7 +163,7 @@ public class ParserFactoryTests : IDisposable
 
         // Assert
         var allParsers = ParserFactory.GetAllParsers();
-        Assert.Equal(2, allParsers.Count); // EpubParser + PlainTextParser
+        Assert.Equal(3, allParsers.Count); // EpubParser + PlainTextParser + GenericFileParser
         Assert.DoesNotContain(allParsers, p => p is TestParser);
     }
 

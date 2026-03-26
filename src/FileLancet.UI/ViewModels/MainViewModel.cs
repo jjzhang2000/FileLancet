@@ -256,8 +256,16 @@ namespace FileLancet.UI.ViewModels
             NodeDetails.FileSize = FormatFileSize(SelectedNode.Size);
             NodeDetails.MimeType = SelectedNode.MimeType;
 
-            // 如果是根节点，显示 EPUB 元数据
-            if (SelectedNode.Type == NodeType.Root && FileDetails != null)
+            // 更新文件基本信息
+            if (FileDetails != null)
+            {
+                NodeDetails.FileExtension = FileDetails.FileExtension;
+                NodeDetails.LastModified = FileDetails.LastModified.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            // 如果是根节点，显示 EPUB 元数据（仅对 EPUB 文件）
+            if (SelectedNode.Type == NodeType.Root && FileDetails != null && 
+                !string.IsNullOrEmpty(FileDetails.EpubVersion))
             {
                 NodeDetails.IsEpubMetadataVisible = true;
                 NodeDetails.Title = FileDetails.Title;

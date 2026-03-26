@@ -14,6 +14,7 @@ namespace FileLancet.UI.ViewModels
         private string _nodeType = "";
         private string _nodePath = "";
         private string _fileSize = "";
+        private string _fileExtension = "";
         private string _mimeType = "";
         private string _lastModified = "";
         private bool _isEpubMetadataVisible;
@@ -53,6 +54,12 @@ namespace FileLancet.UI.ViewModels
         {
             get => _fileSize;
             set { _fileSize = value; OnPropertyChanged(); }
+        }
+
+        public string FileExtension
+        {
+            get => _fileExtension;
+            set { _fileExtension = value; OnPropertyChanged(); }
         }
 
         public string MimeType
@@ -121,6 +128,7 @@ namespace FileLancet.UI.ViewModels
             NodeType = "";
             NodePath = "";
             FileSize = "";
+            FileExtension = "";
             MimeType = "";
             LastModified = "";
             IsEpubMetadataVisible = false;

@@ -9,6 +9,9 @@ public class FileDetails
     public string FilePath { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public DateTime LastModified { get; set; }
+    public DateTime CreatedTime { get; set; }
+    public string FileExtension { get; set; } = string.Empty;
+    public string MimeType { get; set; } = string.Empty;
     public string Checksum { get; set; } = string.Empty;
 
     // EPUB 元数据
