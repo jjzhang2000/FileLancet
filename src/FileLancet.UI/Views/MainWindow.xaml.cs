@@ -82,7 +82,7 @@ namespace FileLancet.UI.Views
         {
             MessageBox.Show(
                 "File Lancet - File Analyzer\n\n" +
-                "Version 0.1\n" +
+                "Version v0.1.1\n" +
                 "A tool for analyzing file structure\n\n" +
                 "Features:\n" +
                 "- Multi-format support (EPUB, TXT, etc.)\n" +
