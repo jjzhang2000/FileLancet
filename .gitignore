@@ -48,6 +48,11 @@ ehthumbs.db
 # Testing
 coverage/
 
+# Release and publish
+releases/
+publish/
+*.zip
+
 # Other
 *.swp
 *.swo
