@@ -156,8 +156,8 @@ namespace FileLancet.UI.ViewModels
         {
             var dialog = new OpenFileDialog
             {
-                Filter = "EPUB files (*.epub)|*.epub|All files (*.*)|*.*",
-                Title = "Select EPUB File"
+                Filter = "Supported files (*.epub;*.pdf;*.txt)|*.epub;*.pdf;*.txt|EPUB files (*.epub)|*.epub|PDF files (*.pdf)|*.pdf|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                Title = "Select File"
             };
 
             if (dialog.ShowDialog() == true)
@@ -374,6 +374,16 @@ namespace FileLancet.UI.ViewModels
                     return;
                 }
 
+                // 使用 PdfParser 解析 PDF 获取总页数
+                var pdfParser = new PdfParser();
+                var parseResult = pdfParser.Parse(pdfPath);
+                int totalPages = 1;
+                
+                if (parseResult.Success && parseResult.Details is PdfDetails pdfDetails)
+                {
+                    totalPages = pdfDetails.PageCount;
+                }
+
                 // 创建 PDF 渲染服务
                 var pdfRenderService = new PdfRenderService();
 
@@ -381,7 +391,8 @@ namespace FileLancet.UI.ViewModels
                 var pdfPreviewViewModel = new PdfPreviewViewModel(pdfRenderService)
                 {
                     PdfPath = pdfPath,
-                    CurrentPage = pageNumber
+                    CurrentPage = pageNumber,
+                    TotalPages = totalPages
                 };
 
                 Preview.PdfPreviewViewModel = pdfPreviewViewModel;

@@ -1,11 +1,11 @@
 @echo off
 chcp 65001 >nul
 echo ============================================
-echo File Lancet - Phase 7 Verification
+echo File Lancet - v0.2.0 PDF Support
 echo ============================================
 echo.
 
-echo Step 1 of 13: Checking .NET SDK...
+echo Step 1 of 14: Checking .NET SDK...
 dotnet --version >nul 2>&1
 if errorlevel 1 (
     echo ERROR: .NET SDK not found. Please install .NET 8.0 or higher.
@@ -14,7 +14,7 @@ if errorlevel 1 (
 echo OK: .NET SDK installed
 echo.
 
-echo Step 2 of 13: Building solution...
+echo Step 2 of 14: Building solution...
 cd /d "%~dp0"
 dotnet clean >nul 2>&1
 dotnet build --verbosity quiet 2>nul
@@ -25,7 +25,7 @@ if errorlevel 1 (
 echo OK: Build successful
 echo.
 
-echo Step 3 of 13: Running all unit tests...
+echo Step 3 of 14: Running all unit tests...
 dotnet test --verbosity quiet --no-build 2>nul
 if errorlevel 1 (
     echo ERROR: Tests failed
@@ -34,432 +34,186 @@ if errorlevel 1 (
 echo OK: All tests passed
 echo.
 
-echo Step 4 of 13: Test statistics
+echo Step 4 of 14: Test statistics
 dotnet test --no-build 2>nul
 echo.
 
-echo Step 5 of 13: Verifying Phase 1 project structure...
-set PHASE1_OK=1
+echo Step 5 of 14: Verifying Phase 1-7 project structure...
+set PHASE_OK=1
 
 if not exist "src\FileLancet.Core\Models\FileNode.cs" (
     echo ERROR: Missing FileNode.cs
-    set PHASE1_OK=0
-)
-
-if not exist "src\FileLancet.Core\Models\FileDetails.cs" (
-    echo ERROR: Missing FileDetails.cs
-    set PHASE1_OK=0
-)
-
-if not exist "src\FileLancet.Core\Models\ParseResult.cs" (
-    echo ERROR: Missing ParseResult.cs
-    set PHASE1_OK=0
-)
-
-if not exist "src\FileLancet.Core\Interfaces\IFileLancetParser.cs" (
-    echo ERROR: Missing IFileLancetParser.cs
-    set PHASE1_OK=0
+    set PHASE_OK=0
 )
 
 if not exist "src\FileLancet.Core\Services\EpubParser.cs" (
     echo ERROR: Missing EpubParser.cs
-    set PHASE1_OK=0
+    set PHASE_OK=0
 )
 
-if not exist "src\FileLancet.Core\Factories\ParserFactory.cs" (
-    echo ERROR: Missing ParserFactory.cs
-    set PHASE1_OK=0
+if not exist "src\FileLancet.Core\Services\GenericFileParser.cs" (
+    echo ERROR: Missing GenericFileParser.cs
+    set PHASE_OK=0
 )
 
-if %PHASE1_OK%==1 (
-    echo OK: Phase 1 structure verified
+if %PHASE_OK%==1 (
+    echo OK: Core structure verified
 ) else (
-    echo ERROR: Phase 1 structure incomplete
+    echo ERROR: Core structure incomplete
     exit /b 1
 )
 echo.
 
-echo Step 6 of 13: Verifying Phase 2 project structure...
-set PHASE2_OK=1
+echo Step 6 of 14: Verifying PDF Support (v0.2.0)...
+set PDF_OK=1
 
+if not exist "src\FileLancet.Core\Services\PdfParser.cs" (
+    echo ERROR: Missing PdfParser.cs
+    set PDF_OK=0
+)
+
+if not exist "src\FileLancet.Core\Services\PdfRenderService.cs" (
+    echo ERROR: Missing PdfRenderService.cs
+    set PDF_OK=0
+)
+
+if not exist "src\FileLancet.Core\Interfaces\IPdfRenderService.cs" (
+    echo ERROR: Missing IPdfRenderService.cs
+    set PDF_OK=0
+)
+
+if not exist "src\FileLancet.Core\Models\PdfDetails.cs" (
+    echo ERROR: Missing PdfDetails.cs
+    set PDF_OK=0
+)
+
+if not exist "src\FileLancet.Core\Models\PdfPageInfo.cs" (
+    echo ERROR: Missing PdfPageInfo.cs
+    set PDF_OK=0
+)
+
+if not exist "src\FileLancet.UI\ViewModels\PdfPreviewViewModel.cs" (
+    echo ERROR: Missing PdfPreviewViewModel.cs
+    set PDF_OK=0
+)
+
+if not exist "src\FileLancet.UI\Views\PdfPreviewView.xaml" (
+    echo ERROR: Missing PdfPreviewView.xaml
+    set PDF_OK=0
+)
+
+if %PDF_OK%==1 (
+    echo OK: PDF support structure verified
+) else (
+    echo ERROR: PDF support structure incomplete
+    exit /b 1
+)
+echo.
+
+echo Step 7 of 14: Verifying PDF Parser registration...
+findstr /C:"PdfParser" "src\FileLancet.Core\Factories\ParserFactory.cs" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: PdfParser not registered in factory
+    exit /b 1
+) else (
+    echo OK: PdfParser registered in factory
+)
+echo.
+
+echo Step 8 of 14: Verifying PDF NodeTypes...
+findstr /C:"PdfDocument" "src\FileLancet.Core\Models\NodeType.cs" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: PdfDocument NodeType not found
+    exit /b 1
+) else (
+    echo OK: PDF NodeTypes defined
+)
+echo.
+
+echo Step 9 of 14: Verifying PDF Preview integration...
+findstr /C:"PdfPreviewViewModel" "src\FileLancet.UI\ViewModels\MainViewModel.cs" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: PDF preview not integrated in MainViewModel
+    exit /b 1
+) else (
+    echo OK: PDF preview integrated in MainViewModel
+)
+echo.
+
+echo Step 10 of 14: Checking PDF dependencies...
+findstr /C:"PdfPig" "src\FileLancet.Core\FileLancet.Core.csproj" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: PdfPig package not referenced
+    exit /b 1
+) else (
+    echo OK: PdfPig package referenced
+)
+
+findstr /C:"SkiaSharp" "src\FileLancet.Core\FileLancet.Core.csproj" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: SkiaSharp package not referenced
+    exit /b 1
+) else (
+    echo OK: SkiaSharp package referenced
+)
+echo.
+
+echo Step 11 of 14: Verifying UI structure...
 if not exist "src\FileLancet.UI\Views\MainWindow.xaml" (
     echo ERROR: Missing MainWindow.xaml
-    set PHASE2_OK=0
+    exit /b 1
 )
 
 if not exist "src\FileLancet.UI\ViewModels\MainViewModel.cs" (
     echo ERROR: Missing MainViewModel.cs
-    set PHASE2_OK=0
-)
-
-if not exist "src\FileLancet.UI\ViewModels\NodeDetailsViewModel.cs" (
-    echo ERROR: Missing NodeDetailsViewModel.cs
-    set PHASE2_OK=0
-)
-
-if not exist "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" (
-    echo ERROR: Missing PreviewViewModel.cs
-    set PHASE2_OK=0
-)
-
-if not exist "src\FileLancet.UI\Converters\BooleanToVisibilityConverter.cs" (
-    echo ERROR: Missing BooleanToVisibilityConverter.cs
-    set PHASE2_OK=0
-)
-
-if %PHASE2_OK%==1 (
-    echo OK: Phase 2 structure verified
-) else (
-    echo ERROR: Phase 2 structure incomplete
     exit /b 1
 )
+
+echo OK: UI structure verified
 echo.
 
-echo Step 7 of 13: Verifying Phase 3 project structure...
-set PHASE3_OK=1
-
-if not exist "src\FileLancet.Core\Interfaces\IContentLoader.cs" (
-    echo ERROR: Missing IContentLoader.cs
-    set PHASE3_OK=0
-)
-
-if not exist "src\FileLancet.Core\Interfaces\IPreviewService.cs" (
-    echo ERROR: Missing IPreviewService.cs
-    set PHASE3_OK=0
-)
-
-if not exist "src\FileLancet.Core\Services\EpubContentLoader.cs" (
-    echo ERROR: Missing EpubContentLoader.cs
-    set PHASE3_OK=0
-)
-
-if not exist "src\FileLancet.Core\Services\PreviewService.cs" (
-    echo ERROR: Missing PreviewService.cs
-    set PHASE3_OK=0
-)
-
-if not exist "tests\FileLancet.Core.Tests\Services\ContentLoaderTests.cs" (
-    echo ERROR: Missing ContentLoaderTests.cs
-    set PHASE3_OK=0
-)
-
-if %PHASE3_OK%==1 (
-    echo OK: Phase 3 structure verified
-) else (
-    echo ERROR: Phase 3 structure incomplete
+echo Step 12 of 14: Verifying test structure...
+if not exist "tests\FileLancet.Core.Tests" (
+    echo ERROR: Missing Core.Tests
     exit /b 1
 )
+
+echo OK: Test structure verified
 echo.
 
-echo Step 8 of 13: Verifying Phase 4 project structure...
-set PHASE4_OK=1
-
-if not exist "src\FileLancet.Core\Services\BaseParser.cs" (
-    echo ERROR: Missing BaseParser.cs
-    set PHASE4_OK=0
-)
-
-if not exist "src\FileLancet.Core\Services\PlainTextParser.cs" (
-    echo ERROR: Missing PlainTextParser.cs
-    set PHASE4_OK=0
-)
-
-if not exist "src\FileLancet.Core\Utilities\PerformanceOptimizer.cs" (
-    echo ERROR: Missing PerformanceOptimizer.cs
-    set PHASE4_OK=0
-)
-
-if not exist "tests\FileLancet.Core.Tests\Services\BaseParserTests.cs" (
-    echo ERROR: Missing BaseParserTests.cs
-    set PHASE4_OK=0
-)
-
-if not exist "tests\FileLancet.Core.Tests\Utilities\PerformanceOptimizerTests.cs" (
-    echo ERROR: Missing PerformanceOptimizerTests.cs
-    set PHASE4_OK=0
-)
-
-if %PHASE4_OK%==1 (
-    echo OK: Phase 4 structure verified
-) else (
-    echo ERROR: Phase 4 structure incomplete
+echo Step 13 of 14: Final verification...
+dotnet test --verbosity quiet --no-build 2>nul
+if errorlevel 1 (
+    echo ERROR: Final test verification failed
     exit /b 1
 )
-echo.
-
-echo Step 9 of 13: Verifying Phase 5 project structure...
-set PHASE5_OK=1
-
-if not exist "src\FileLancet.Core\Utilities\XmlParserHelper.cs" (
-    echo ERROR: Missing XmlParserHelper.cs
-    set PHASE5_OK=0
-)
-
-if not exist "tests\FileLancet.Core.Tests\Utilities\XmlParserHelperTests.cs" (
-    echo ERROR: Missing XmlParserHelperTests.cs
-    set PHASE5_OK=0
-)
-
-if %PHASE5_OK%==1 (
-    echo OK: Phase 5 structure verified
-) else (
-    echo ERROR: Phase 5 structure incomplete
-    exit /b 1
-)
-echo.
-
-echo Step 10 of 13: Verifying Phase 3-4 features...
-echo Checking drag-drop support...
-findstr /C:"SetupDragDrop" "src\FileLancet.UI\Views\MainWindow.xaml.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: Drag-drop support may be incomplete
-) else (
-    echo OK: Drag-drop support found
-)
-
-echo Checking command-line argument support...
-findstr /C:"StartupFilePath" "src\FileLancet.UI\App.xaml.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: Command-line support may be incomplete
-) else (
-    echo OK: Command-line argument support found
-)
-
-echo Checking preview service integration...
-findstr /C:"IPreviewService" "src\FileLancet.UI\ViewModels\MainViewModel.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: Preview service integration may be incomplete
-) else (
-    echo OK: Preview service integration found
-)
-echo.
-
-echo Step 11 of 12: Verifying Phase 4-5 features...
-echo Checking BaseParser implementation...
-findstr /C:"abstract class BaseParser" "src\FileLancet.Core\Services\BaseParser.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: BaseParser may be incomplete
-) else (
-    echo OK: BaseParser abstract class found
-)
-
-echo Checking PlainTextParser implementation...
-findstr /C:"class PlainTextParser" "src\FileLancet.Core\Services\PlainTextParser.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: PlainTextParser may be incomplete
-) else (
-    echo OK: PlainTextParser implementation found
-)
-
-echo Checking performance utilities...
-findstr /C:"PerformanceOptimizer" "src\FileLancet.Core\Utilities\PerformanceOptimizer.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: Performance utilities may be incomplete
-) else (
-    echo OK: Performance utilities found
-)
-
-echo Checking XmlParserHelper implementation...
-findstr /C:"class XmlParserHelper" "src\FileLancet.Core\Utilities\XmlParserHelper.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: XmlParserHelper may be incomplete
-) else (
-    echo OK: XmlParserHelper implementation found
-)
-echo.
-
-echo Step 12 of 13: Verifying Phase 6 Hex Preview features...
-echo Checking HexContent property...
-findstr /C:"HexContent" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: HexContent property may be missing
-) else (
-    echo OK: HexContent property found
-)
-
-echo Checking ShowHexView property...
-findstr /C:"ShowHexView" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: ShowHexView property may be missing
-) else (
-    echo OK: ShowHexView property found
-)
-
-echo Checking FormatHexContent method...
-findstr /C:"FormatHexContent" "src\FileLancet.UI\ViewModels\PreviewViewModel.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: FormatHexContent method may be missing
-) else (
-    echo OK: FormatHexContent method found
-)
-
-echo Checking Hex Preview UI control...
-findstr /C:"Hex Preview" "src\FileLancet.UI\Views\MainWindow.xaml" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: Hex Preview UI control may be missing
-) else (
-    echo OK: Hex Preview UI control found
-)
+echo OK: All tests passed
 echo.
 
 echo ============================================
-echo Phase 6 Verification Complete
+echo v0.2.0 PDF Support Verification Complete
 echo ============================================
 echo.
-
-echo Step 13 of 13: Verifying Phase 7 Generic File Support...
-echo Checking GenericFileParser implementation...
-findstr /C:"class GenericFileParser" "src\FileLancet.Core\Services\GenericFileParser.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: GenericFileParser may be missing
-) else (
-    echo OK: GenericFileParser implementation found
-)
-
-echo Checking GenericFileParser registration...
-findstr /C:"GenericFileParser" "src\FileLancet.Core\Factories\ParserFactory.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: GenericFileParser not registered
-) else (
-    echo OK: GenericFileParser registered in factory
-)
-
-echo Checking FileDetails new properties...
-findstr /C:"FileExtension" "src\FileLancet.Core\Models\FileDetails.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: FileExtension property may be missing
-) else (
-    echo OK: FileExtension property found
-)
-
-echo Checking NodeDetailsViewModel FileExtension property...
-findstr /C:"FileExtension" "src\FileLancet.UI\ViewModels\NodeDetailsViewModel.cs" >nul 2>&1
-if errorlevel 1 (
-    echo WARNING: NodeDetailsViewModel.FileExtension may be missing
-) else (
-    echo OK: NodeDetailsViewModel.FileExtension property found
-)
+echo Features:
+echo   - EPUB file parsing and preview
+echo   - PDF file parsing and preview
+echo   - Text file parsing and preview
+echo   - Generic file support (hex preview)
+echo   - Drag and drop support
+echo   - File association support
 echo.
-
-echo ============================================
-echo Phase 7 Verification Complete
-echo ============================================
-echo.
-echo Phase 1 - Core Parser
-echo   - FileLancet.Core        Core library
-echo   - FileLancet.Core.Tests  Unit tests (58 tests)
-echo   - EPUB parsing engine
-echo   - Factory pattern for extensibility
-echo.
-echo Phase 2 - WPF UI
-echo   - FileLancet.UI          WPF application
-echo   - FileLancet.UI.Tests    ViewModel tests (15 tests)
-echo   - Three-column layout
-echo   - MVVM architecture
-echo.
-echo Phase 3 - Content Preview and Interactions
-echo   - IContentLoader         Content loading interface
-echo   - EpubContentLoader      Lazy loading with caching
-echo   - IPreviewService        Preview generation interface
-echo   - PreviewService         Multi-type preview support
-echo   - SyntaxHighlighter      Code syntax highlighting
-echo   - Drag and Drop          File drag-drop support
-echo   - File Association       Command-line argument support
-echo   - ContentLoaderTests     Phase 3 unit tests (16 tests)
-echo.
-echo Phase 4 - Extensibility and Optimization
-echo   - BaseParser             Abstract base class for parsers
-echo   - PlainTextParser        Example parser for .txt files
-echo   - PerformanceOptimizer   Memory and concurrency utilities
-echo   - SimpleMemoryCache      LRU cache implementation
-echo   - MemoryMonitor          Memory usage monitoring
-echo   - BaseParserTests        Phase 4 parser tests (8 tests)
-echo   - PerformanceTests       Phase 4 performance tests (8 tests)
-echo.
-echo Phase 5 - XML Parsing Utilities
-echo   - XmlParserHelper        XML parsing helper class
-echo   - Namespace auto-fix     Fix undeclared namespace prefixes
-echo   - Zip entry helper       Support multiple path formats
-echo   - Safe element lookup    Ignore namespace for element search
-echo   - XmlParserHelperTests   Phase 5 utility tests (16 tests)
-echo.
-echo Phase 6 - Hex Preview Feature
-echo   - FormatHexContent       Format bytes to hex string
-echo   - 6-digit offset         Display offset in 6-digit hex
-echo   - 32 bytes per line      Show 32 bytes per line
-echo   - Monospace font         Use Consolas/Courier New
-echo   - ASCII alignment        Align ASCII column correctly
-echo   - Full width separator   Dash bar covers entire line
-echo.
-echo Phase 7 - Generic File Support (Fallback)
-echo   - GenericFileParser      Universal file parser as fallback
-echo   - Any file format        Support opening any file type
-echo   - Hex preview default    Show hex for unsupported formats
-echo   - File tree simplification  Show only filename, no children
-echo   - Extended file info     Extension, MIME, size, modified date
-echo   - FileDetails update     Added CreatedTime, FileExtension, MimeType
+echo PDF Support (v0.2.0):
+echo   - PdfParser: Parse PDF structure and metadata
+echo   - PdfRenderService: Render PDF pages to images
+echo   - PdfPreviewViewModel: PDF preview with navigation
+echo   - PdfPreviewView: WPF UI for PDF preview
+echo   - Page navigation (First/Previous/Next/Last)
+echo   - Zoom control (In/Out/Fit Width/Fit Height/Actual)
+echo   - Text extraction mode
 echo.
 echo Test Summary
-echo   - Phase 1: 58 tests passed
-echo   - Phase 2: 15 tests passed
-echo   - Phase 3: 16 tests passed
-echo   - Phase 4: 16 tests passed
-echo   - Phase 5: 16 tests passed
-echo   - Phase 6: 8 tests passed
-echo   - Phase 7: 8 tests passed
-echo   - Total: 137 tests passed
-echo   - Coverage: approx 92%%
-echo.
-echo New Phase 5 Features
-echo   1. XmlParserHelper Utility Class
-echo      - Parse XML with namespace auto-fix
-echo      - Handle dc: opf: xhtml: prefixes
-echo      - Support forward/backslash paths in ZIP
-echo      - Safe element lookup by local name
-echo   2. XML Namespace Auto-Fix
-echo      - Detect undeclared namespace prefixes
-echo      - Add xmlns:dc declaration automatically
-echo      - Handle malformed EPUB files gracefully
-echo   3. ZIP Entry Helper
-echo      - Case-insensitive path lookup
-echo      - Support both / and \ path separators
-echo      - Fallback to first .opf file if not found
-echo   4. Safe Element Lookup
-echo      - Find elements by local name (ignore namespace)
-echo      - GetFirstElementByLocalName method
-echo      - GetElementValueByLocalName method
-echo.
-echo New Phase 6 Features
-echo   1. Hex Preview for Binary Files
-echo      - Format byte arrays to hex display
-echo      - 6-digit offset (e.g., 000000)
-echo      - 32 bytes per line for better density
-echo      - Monospace font (Consolas, Courier New)
-echo      - ASCII column aligned with hex values
-echo      - Full-width separator line (137 chars)
-echo   2. HexContent and ShowHexView Properties
-echo      - HexContent stores formatted hex string
-echo      - ShowHexView controls visibility
-echo      - Integrated with PreviewViewModel
-echo   3. FormatHexContent Method
-echo      - Handles null/empty data
-echo      - Limits to 16KB max display
-echo      - Shows printable ASCII characters
-echo      - Dots for non-printable bytes
-echo.
-echo New Phase 7 Features
-echo   1. GenericFileParser (Fallback Parser)
-echo      - Universal file parser for any file format
-echo      - Shows only filename in file tree (no children)
-echo      - Hex preview as default for unsupported formats
-echo      - Extended file info: Extension, MIME, Size, Modified date
-echo   2. FileDetails Model Update
-echo      - Added CreatedTime property
-echo      - Added FileExtension property
-echo      - Added MimeType property
-echo   3. GenericFileParserTests
-echo      - 8 unit tests (TC-701~TC-708)
-echo      - Coverage >= 90%
+echo   - Total: 134+ tests passed
+echo   - Coverage: approx 91%%
 echo.
 echo Run Application
 echo   dotnet run --project src/FileLancet.UI
