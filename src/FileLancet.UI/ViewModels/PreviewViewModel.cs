@@ -184,6 +184,38 @@ namespace FileLancet.UI.ViewModels
 
         #endregion
 
+        #region PDF Node Preview Formatters
+
+        private string FormatPdfFontPreview(FileNode node)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== PDF Font Information ===");
+            sb.AppendLine();
+            sb.AppendLine($"Name: {node.Name}");
+            sb.AppendLine($"Description: {node.Description}");
+            sb.AppendLine($"Path: {node.Path}");
+            sb.AppendLine();
+            sb.AppendLine("--- Details ---");
+            sb.AppendLine(node.Description);
+            return sb.ToString();
+        }
+
+        private string FormatPdfImagePreview(FileNode node)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=== PDF Image Information ===");
+            sb.AppendLine();
+            sb.AppendLine($"Name: {node.Name}");
+            sb.AppendLine($"Description: {node.Description}");
+            sb.AppendLine($"Path: {node.Path}");
+            sb.AppendLine();
+            sb.AppendLine("--- Image Details ---");
+            sb.AppendLine(node.Description);
+            return sb.ToString();
+        }
+
+        #endregion
+
         #region Methods
 
         public void Clear()
@@ -245,7 +277,24 @@ namespace FileLancet.UI.ViewModels
                 case NodeType.PdfPage:
                     PreviewType = PreviewType.Pdf;
                     IsPdf = true;
-                    // PDF 预览由专门的 PdfPreviewViewModel 处理
+                    break;
+
+                case NodeType.PdfFont:
+                    PreviewType = PreviewType.Text;
+                    IsPdf = false;
+                    TextContent = FormatPdfFontPreview(node);
+                    break;
+
+                case NodeType.PdfImage:
+                    PreviewType = PreviewType.Text;
+                    IsPdf = false;
+                    TextContent = FormatPdfImagePreview(node);
+                    break;
+
+                case NodeType.PdfOutline:
+                    PreviewType = PreviewType.Text;
+                    IsPdf = false;
+                    TextContent = $"[PDF Outline/Bookmark]\n\nName: {node.Name}\nDescription: {node.Description}\nPath: {node.Path}";
                     break;
 
                 default:

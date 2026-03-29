@@ -19,6 +19,7 @@
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:PreviewTypeToVisibilityConverter x:Key="PreviewTypeToVisibilityConverter" />
     </Window.Resources>
 
     <Grid>
@@ -280,8 +281,8 @@
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                 <Grid>
                                     <!-- PDF Image -->
-                                    <Image Source="{Binding Preview.PdfPreviewViewModel.PageImage}" 
-                                           Stretch="None"
+                                    <Image Source="{Binding Preview.PdfPreviewViewModel.PageImage}"
+                                           Stretch="Uniform"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Visibility="{Binding Preview.PdfPreviewViewModel.ShowTextMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>

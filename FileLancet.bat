@@ -141,12 +141,12 @@ if errorlevel 1 (
 echo.
 
 echo Step 10 of 14: Checking PDF dependencies...
-findstr /C:"PdfPig" "src\FileLancet.Core\FileLancet.Core.csproj" >nul 2>&1
+findstr /C:"itext7" "src\FileLancet.Core\FileLancet.Core.csproj" >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: PdfPig package not referenced
+    echo ERROR: iText7 package not referenced
     exit /b 1
 ) else (
-    echo OK: PdfPig package referenced
+    echo OK: iText7 package referenced
 )
 
 findstr /C:"SkiaSharp" "src\FileLancet.Core\FileLancet.Core.csproj" >nul 2>&1

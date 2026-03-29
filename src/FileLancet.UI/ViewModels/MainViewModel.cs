@@ -307,10 +307,19 @@ namespace FileLancet.UI.ViewModels
             // 先清空之前的内容，避免前一元素预览残留
             Preview.Clear();
 
-            // 处理 PDF 预览
+            // 处理 PDF 相关节点的预览
             if (SelectedNode.Type == NodeType.PdfDocument || SelectedNode.Type == NodeType.PdfPage)
             {
                 await UpdatePdfPreviewAsync();
+                return;
+            }
+
+            // 处理 PDF 内部节点（Font、Image、Outline）的预览
+            if (SelectedNode.Type == NodeType.PdfFont ||
+                SelectedNode.Type == NodeType.PdfImage ||
+                SelectedNode.Type == NodeType.PdfOutline)
+            {
+                Preview.UpdatePreview(SelectedNode);
                 return;
             }
 
@@ -348,7 +357,7 @@ namespace FileLancet.UI.ViewModels
             Preview.IsLoading = true;
             Preview.PreviewTitle = $"PDF Preview: {SelectedNode.Name}";
             Preview.IsPdf = true;
-            Preview.PreviewType = PreviewType.Pdf;  // 关键：设置 PreviewType 为 Pdf
+            Preview.PreviewType = PreviewType.Pdf;
 
             try
             {
@@ -362,7 +371,6 @@ namespace FileLancet.UI.ViewModels
                 }
                 else if (SelectedNode.Type == NodeType.PdfPage)
                 {
-                    // 从路径中提取页码，格式为 "filepath#page=N"
                     var pathParts = SelectedNode.Path.Split("#page=");
                     pdfPath = pathParts[0];
                     if (pathParts.Length > 1 && int.TryParse(pathParts[1], out var page))
@@ -379,7 +387,7 @@ namespace FileLancet.UI.ViewModels
                 var pdfParser = new PdfParser();
                 var parseResult = pdfParser.Parse(pdfPath);
                 int totalPages = 1;
-                
+
                 if (parseResult.Success && parseResult.Details is PdfDetails pdfDetails)
                 {
                     totalPages = pdfDetails.PageCount;
@@ -389,7 +397,6 @@ namespace FileLancet.UI.ViewModels
                 var pdfRenderService = new PdfRenderService();
 
                 // 创建 PDF 预览视图模型
-                // 注意：先设置 TotalPages，再设置 PdfPath（因为设置 PdfPath 会触发加载）
                 var pdfPreviewViewModel = new PdfPreviewViewModel(pdfRenderService);
                 pdfPreviewViewModel.SetTotalPages(totalPages);
                 pdfPreviewViewModel.PdfPath = pdfPath;

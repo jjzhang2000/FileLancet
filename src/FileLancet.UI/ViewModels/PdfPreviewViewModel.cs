@@ -400,14 +400,21 @@ public class PdfPreviewViewModel : INotifyPropertyChanged
         if (imageBytes == null || imageBytes.Length == 0)
             return null;
 
-        using var stream = new MemoryStream(imageBytes);
-        var bitmap = new BitmapImage();
-        bitmap.BeginInit();
-        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.StreamSource = stream;
-        bitmap.EndInit();
-        bitmap.Freeze();
-        return bitmap;
+        try
+        {
+            using var stream = new MemoryStream(imageBytes);
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = stream;
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
