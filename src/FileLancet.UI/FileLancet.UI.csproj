@@ -12,4 +12,8 @@
     <ProjectReference Include="..\FileLancet.Core\FileLancet.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.9" />
+  </ItemGroup>
+
 </Project>

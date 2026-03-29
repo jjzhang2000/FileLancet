@@ -18,5 +18,12 @@ public enum NodeType
     Audio,          // 音频文件
     Video,          // 视频文件
     Script,         // JavaScript
-    Other           // 其他文件
+    Other,          // 其他文件
+    
+    // PDF 相关类型 (v0.2.0 新增)
+    PdfDocument,    // PDF 文档根节点
+    PdfPage,        // PDF 页面
+    PdfOutline,     // PDF 书签/大纲
+    PdfFont,        // PDF 字体
+    PdfImage        // PDF 内嵌图片
 }

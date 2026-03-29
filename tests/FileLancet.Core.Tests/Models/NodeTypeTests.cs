@@ -19,6 +19,11 @@ public class NodeTypeTests
     [InlineData(NodeType.Video, 11)]
     [InlineData(NodeType.Script, 12)]
     [InlineData(NodeType.Other, 13)]
+    [InlineData(NodeType.PdfDocument, 14)]
+    [InlineData(NodeType.PdfPage, 15)]
+    [InlineData(NodeType.PdfOutline, 16)]
+    [InlineData(NodeType.PdfFont, 17)]
+    [InlineData(NodeType.PdfImage, 18)]
     public void TC_106_NodeType_EnumValues_AreDefined(NodeType type, int expectedValue)
     {
         Assert.Equal(expectedValue, (int)type);
@@ -55,6 +60,11 @@ public class NodeTypeTests
         NodeType.Video => "Video",
         NodeType.Script => "Script",
         NodeType.Other => "Other",
+        NodeType.PdfDocument => "PdfDocument",
+        NodeType.PdfPage => "PdfPage",
+        NodeType.PdfOutline => "PdfOutline",
+        NodeType.PdfFont => "PdfFont",
+        NodeType.PdfImage => "PdfImage",
         _ => throw new ArgumentOutOfRangeException()
     };
 }

@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="PdfPig" Version="0.1.9" />
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+  </ItemGroup>
+
 </Project>

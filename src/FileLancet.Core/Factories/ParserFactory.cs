@@ -71,6 +71,7 @@ public static class ParserFactory
             _parsers.Clear();
             RegisterParser(new EpubParser());
             RegisterParser(new PlainTextParser());
+            RegisterParser(new PdfParser());        // v0.2.0 新增：PDF 解析器
             // 通用解析器作为兜底，必须最后注册
             RegisterParser(new GenericFileParser());
         }

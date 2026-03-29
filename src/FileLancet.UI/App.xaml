@@ -6,6 +6,7 @@
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <converters:PreviewTypeToVisibilityConverter x:Key="PreviewTypeToVisibilityConverter"/>
     </Application.Resources>
 </Application>
