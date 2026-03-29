@@ -341,9 +341,11 @@ public class PdfPreviewViewModel : INotifyPropertyChanged
             PageWidth = width;
             PageHeight = height;
 
-            // 获取总页数（这里简化处理，实际应该从解析结果获取）
-            TotalPages = 1;
-            CurrentPage = 1;
+            // 如果 TotalPages 未设置，则设置为 1
+            if (TotalPages <= 0)
+            {
+                TotalPages = 1;
+            }
 
             if (ShowTextMode)
                 await LoadTextContentAsync();
