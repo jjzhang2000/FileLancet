@@ -243,16 +243,71 @@
                            Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Image}"/>
                     
                     <!-- PDF Preview -->
-                    <ContentControl Grid.Row="1"
-                                    Visibility="{Binding Preview.IsPdf, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ContentControl.Content>
-                            <Binding Path="Preview.PdfPreviewViewModel">
-                                <Binding.Converter>
-                                    <converters:PdfPreviewViewModelToViewConverter/>
-                                </Binding.Converter>
-                            </Binding>
-                        </ContentControl.Content>
-                    </ContentControl>
+                    <Grid Grid.Row="1"
+                          Visibility="{Binding Preview.IsPdf, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- PDF Toolbar -->
+                        <ToolBar Grid.Row="0" Background="#F0F0F0" Padding="2">
+                            <Button Content="|◀" Command="{Binding Preview.PdfPreviewViewModel.FirstPageCommand}" ToolTip="首页" Margin="1" Padding="5,2"/>
+                            <Button Content="◀" Command="{Binding Preview.PdfPreviewViewModel.PreviousPageCommand}" ToolTip="上一页" Margin="1" Padding="5,2"/>
+                            <TextBlock VerticalAlignment="Center" Margin="5,0">
+                                <Run Text="{Binding Preview.PdfPreviewViewModel.CurrentPage}"/>
+                                <Run Text="/"/>
+                                <Run Text="{Binding Preview.PdfPreviewViewModel.TotalPages}"/>
+                            </TextBlock>
+                            <Button Content="▶" Command="{Binding Preview.PdfPreviewViewModel.NextPageCommand}" ToolTip="下一页" Margin="1" Padding="5,2"/>
+                            <Button Content="▶|" Command="{Binding Preview.PdfPreviewViewModel.LastPageCommand}" ToolTip="末页" Margin="1" Padding="5,2"/>
+                            <Separator Margin="5,0"/>
+                            <Button Content="-" Command="{Binding Preview.PdfPreviewViewModel.ZoomOutCommand}" ToolTip="缩小" Margin="1" Padding="5,2"/>
+                            <TextBlock VerticalAlignment="Center" Margin="3,0" MinWidth="40" TextAlignment="Center">
+                                <Run Text="{Binding Preview.PdfPreviewViewModel.ZoomLevel, StringFormat='{}{0:P0}'}"/>
+                            </TextBlock>
+                            <Button Content="+" Command="{Binding Preview.PdfPreviewViewModel.ZoomInCommand}" ToolTip="放大" Margin="1" Padding="5,2"/>
+                            <Separator Margin="5,0"/>
+                            <Button Content="适应宽度" Command="{Binding Preview.PdfPreviewViewModel.FitWidthCommand}" ToolTip="适应宽度" Margin="1" Padding="5,2"/>
+                            <Button Content="实际大小" Command="{Binding Preview.PdfPreviewViewModel.ActualSizeCommand}" ToolTip="实际大小" Margin="1" Padding="5,2"/>
+                            <Separator Margin="5,0"/>
+                            <ToggleButton Content="文本模式" IsChecked="{Binding Preview.PdfPreviewViewModel.ShowTextMode}" ToolTip="切换文本/图像模式" Margin="1" Padding="5,2"/>
+                        </ToolBar>
+                        
+                        <!-- PDF Content -->
+                        <Border Grid.Row="1" Background="#E0E0E0">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <Grid>
+                                    <!-- PDF Image -->
+                                    <Image Source="{Binding Preview.PdfPreviewViewModel.PageImage}" 
+                                           Stretch="None"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding Preview.PdfPreviewViewModel.ShowTextMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                                    
+                                    <!-- PDF Text -->
+                                    <TextBox Text="{Binding Preview.PdfPreviewViewModel.TextContent}" 
+                                             IsReadOnly="True"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             Padding="20"
+                                             BorderThickness="0"
+                                             Background="White"
+                                             Visibility="{Binding Preview.PdfPreviewViewModel.ShowTextMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                                </Grid>
+                            </ScrollViewer>
+                        </Border>
+                        
+                        <!-- PDF Status Bar -->
+                        <StatusBar Grid.Row="2" Background="#F0F0F0">
+                            <StatusBarItem>
+                                <TextBlock Text="{Binding Preview.PdfPreviewViewModel.StatusMessage}" Padding="5,2"/>
+                            </StatusBarItem>
+                        </StatusBar>
+                    </Grid>
                     
                     <!-- Hex Preview (for binary files) -->
                     <TextBox Grid.Row="1" 
