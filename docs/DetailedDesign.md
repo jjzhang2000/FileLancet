@@ -2,9 +2,10 @@
 
 ## 文档信息
 
-- **版本**: v1.0
-- **日期**: 2026-03-26
-- **状态**: 设计阶段
+- **项目**: File Lancet
+- **版本**: v0.1.1
+- **日期**: 2026-03-29
+- **状态**: 已完成
 
 ---
 
@@ -53,23 +54,17 @@ FileLancet/
 │       ├── ViewModels/            # 视图模型
 │       ├── Converters/            # 值转换器
 │       └── App.xaml               # 应用程序入口
-├── tests/
-│   ├── FileLancet.Core.Tests/     # 核心库单元测试
-│   └── FileLancet.UI.Tests/       # UI 测试
+├── tests/                         # 测试项目
 └── docs/                          # 文档
 ```
 
 ---
 
-## 2. 阶段一：核心地基与 EPUB 解析引擎
+## 2. v0.1.0 设计
 
-### 2.1 目标
+### 2.1 核心接口设计
 
-构建不依赖 UI 的控制台级解析内核，实现 EPUB 文件的完整解析能力。
-
-### 2.2 核心接口设计
-
-#### 2.2.1 解析器接口
+#### 2.1.1 解析器接口
 
 ```csharp
 /// <summary>
@@ -94,7 +89,7 @@ public interface IFileLancetParser
 }
 ```
 
-#### 2.2.2 解析结果
+#### 2.1.2 解析结果
 
 ```csharp
 /// <summary>
@@ -119,9 +114,9 @@ public class ParseResult
 }
 ```
 
-### 2.3 数据模型设计
+### 2.2 数据模型设计
 
-#### 2.3.1 文件节点
+#### 2.2.1 文件节点
 
 ```csharp
 /// <summary>
@@ -179,7 +174,7 @@ public class FileNode
 }
 ```
 
-#### 2.3.2 文件详细信息
+#### 2.2.2 文件详细信息
 
 ```csharp
 /// <summary>
@@ -211,9 +206,9 @@ public class FileDetails
 }
 ```
 
-### 2.4 EPUB 解析器算法
+### 2.3 EPUB 解析器算法
 
-#### 2.4.1 解析流程
+#### 2.3.1 解析流程
 
 ```
 ┌─────────────────┐
@@ -264,42 +259,7 @@ public class FileDetails
 └─────────────────┘
 ```
 
-#### 2.4.2 懒加载策略
-
-```csharp
-/// <summary>
-/// 内容加载器
-/// </summary>
-public interface IContentLoader
-{
-    /// <summary>
-    /// 异步加载节点内容
-    /// </summary>
-    Task<byte[]> LoadContentAsync(FileNode node);
-    
-    /// <summary>
-    /// 异步加载文本内容
-    /// </summary>
-    Task<string> LoadTextAsync(FileNode node);
-}
-
-/// <summary>
-/// EPUB 内容加载器实现
-/// </summary>
-public class EpubContentLoader : IContentLoader
-{
-    private readonly string _epubPath;
-    private readonly Dictionary<string, ZipArchiveEntry> _entryCache;
-    
-    // 实现懒加载逻辑：
-    // 1. 首次访问时打开 ZIP 流
-    // 2. 根据节点路径定位 Entry
-    // 3. 读取内容并缓存
-    // 4. 使用完成后及时释放流
-}
-```
-
-### 2.5 工厂模式设计
+### 2.4 工厂模式设计
 
 ```csharp
 /// <summary>
@@ -331,108 +291,15 @@ public static class ParserFactory
     public static void InitializeDefaults()
     {
         RegisterParser(new EpubParser());
+        RegisterParser(new PlainTextParser());
         // 后续可注册更多解析器
     }
 }
 ```
 
-### 2.6 阶段一测试用例
+### 2.5 视图模型设计
 
-#### 2.6.1 单元测试覆盖率目标
-
-| 模块 | 覆盖率目标 | 说明 |
-|------|-----------|------|
-| Models | **≥ 95%** | 数据模型属性、方法全覆盖 |
-| Services | **≥ 90%** | 核心业务逻辑全覆盖 |
-| Utilities | **≥ 85%** | 工具类关键路径覆盖 |
-| Factories | **≥ 90%** | 工厂模式逻辑全覆盖 |
-| **整体** | **≥ 90%** | 核心库整体覆盖率 |
-
-#### 2.6.2 单元测试详细用例
-
-**Models 层测试**
-
-| 测试编号 | 测试场景 | 测试内容 | 验证点 |
-|---------|---------|---------|--------|
-| TC-101 | FileNode 属性验证 | 设置/获取所有属性 | 属性值正确存储 |
-| TC-102 | FileNode 父子关系 | 添加子节点、设置父节点 | 双向引用正确 |
-| TC-103 | FileNode 路径计算 | 获取完整路径 | 路径拼接正确 |
-| TC-104 | FileDetails 元数据 | 设置 EPUB 元数据 | 所有字段可读写 |
-| TC-105 | ParseResult 状态 | 成功/失败状态切换 | 状态一致性 |
-| TC-106 | NodeType 枚举 | 所有枚举值定义 | 枚举值正确 |
-
-**Services 层测试**
-
-| 测试编号 | 测试场景 | 输入 | 预期输出 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-107 | 标准 EPUB 2.0 解析 | 有效 EPUB 2.0 文件 | ParseResult.Success = true | 元数据、文件树完整 |
-| TC-108 | 标准 EPUB 3.0 解析 | 有效 EPUB 3.0 文件 | ParseResult.Success = true | 支持 NAV 导航 |
-| TC-109 | EPUB 2.0 + NCX 目录 | 旧版 EPUB | 正确解析 NCX | 目录结构完整 |
-| TC-110 | 损坏 ZIP 处理 | 损坏的 EPUB 文件 | ParseResult.Success = false | 错误信息明确 |
-| TC-111 | 非 EPUB 文件 | .txt 文件 | 返回 null 或错误 | CanParse 返回 false |
-| TC-112 | 空文件 | 0 字节文件 | 返回错误 | 边界处理正确 |
-| TC-113 | 大文件解析 | >100MB EPUB | 解析成功，内存占用合理 | 懒加载生效 |
-| TC-114 | 异步解析取消 | 大文件 + CancellationToken | 操作取消，资源释放 | 无内存泄漏 |
-| TC-115 | 并发解析 | 同时解析 5 个文件 | 全部成功 | 线程安全 |
-| TC-116 | 解析器工厂 | 注册/获取解析器 | 正确分发 | 工厂模式正确 |
-
-**Utilities 层测试**
-
-| 测试编号 | 测试场景 | 测试内容 | 验证点 |
-|---------|---------|---------|--------|
-| TC-117 | MIME 类型识别 | 各种文件扩展名 | 识别正确 |
-| TC-118 | 路径处理 | 相对/绝对路径转换 | 路径正确 |
-| TC-119 | 文件大小格式化 | 各种字节数 | 格式化正确 |
-| TC-120 | 校验和计算 | 文件内容 | 计算正确 |
-
-**IContentLoader 测试**
-
-| 测试编号 | 测试场景 | 输入 | 预期输出 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-121 | 懒加载文本 | 文本节点 | 文本内容 | 按需加载 |
-| TC-122 | 懒加载二进制 | 图片节点 | 字节数组 | 内容正确 |
-| TC-123 | 缓存命中 | 重复访问同一节点 | 从缓存读取 | 性能优化 |
-| TC-124 | 缓存失效 | 清除缓存后访问 | 重新加载 | 缓存管理正确 |
-| TC-125 | 加载不存在的条目 | 无效路径 | 抛出异常 | 错误处理正确 |
-
-#### 2.6.3 集成测试用例
-
-| 测试编号 | 测试场景 | 输入 | 预期输出 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-126 | 完整解析流程 | EPUB 文件路径 | ParseResult | 端到端正确 |
-| TC-127 | 解析后遍历树 | 解析结果 | 遍历所有节点 | 树结构完整 |
-| TC-128 | 解析后加载内容 | 解析结果 + 节点选择 | 内容正确 | 联动正确 |
-
-### 2.7 阶段一交付物
-
-1. **代码交付**
-   - FileLancet.Core 类库项目
-   - 完整的 EPUB 解析器实现
-   - 数据模型定义
-
-2. **测试交付**
-   - 单元测试项目（覆盖率 ≥ 90%）
-   - 测试用例执行报告
-   - 覆盖率分析报告（行覆盖率、分支覆盖率）
-
-3. **文档交付**
-   - 接口 API 文档
-   - 解析算法说明
-
-4. **可运行程序**
-   - 控制台测试程序，支持命令行解析 EPUB 并输出 JSON
-
----
-
-## 3. 阶段二：三栏式界面实现
-
-### 3.1 目标
-
-使用 WPF 构建三栏式界面，实现数据模型与视图的绑定。
-
-### 3.2 视图模型设计
-
-#### 3.2.1 主视图模型
+#### 2.5.1 主视图模型
 
 ```csharp
 /// <summary>
@@ -470,7 +337,6 @@ public class MainViewModel : INotifyPropertyChanged
     // 命令
     public ICommand OpenFileCommand { get; }
     public ICommand RefreshCommand { get; }
-    public ICommand ExportCommand { get; }
     
     // 方法
     public async Task LoadFileAsync(string filePath);
@@ -479,46 +345,7 @@ public class MainViewModel : INotifyPropertyChanged
 }
 ```
 
-#### 3.2.2 节点详情视图模型
-
-```csharp
-/// <summary>
-/// 节点详情视图模型
-/// </summary>
-public class NodeDetailsViewModel
-{
-    // 基本信息
-    public string NodeName { get; set; }
-    public string NodeType { get; set; }
-    public string NodePath { get; set; }
-    
-    // 物理属性
-    public string FileSize { get; set; }
-    public string MimeType { get; set; }
-    public string LastModified { get; set; }
-    
-    // EPUB 元数据（仅对根节点显示）
-    public bool IsEpubMetadataVisible { get; set; }
-    public string Title { get; set; }
-    public string Authors { get; set; }
-    public string Publisher { get; set; }
-    public string Language { get; set; }
-    public string Isbn { get; set; }
-    public string EpubVersion { get; set; }
-    
-    // 属性列表（用于 DataGrid 绑定）
-    public ObservableCollection<PropertyItem> Properties { get; set; }
-}
-
-public class PropertyItem
-{
-    public string Name { get; set; }
-    public string Value { get; set; }
-    public string Category { get; set; } // 物理/逻辑
-}
-```
-
-#### 3.2.3 预览视图模型
+#### 2.5.2 预览视图模型
 
 ```csharp
 /// <summary>
@@ -538,6 +365,10 @@ public class PreviewViewModel
     // HTML 内容（用于 WebView2）
     public string HtmlContent { get; set; }
     
+    // 十六进制内容
+    public string HexContent { get; set; }
+    public bool ShowHexView { get; set; }
+    
     // 二进制提示
     public bool IsBinary { get; set; }
     public string BinaryInfo { get; set; }
@@ -549,763 +380,105 @@ public enum PreviewType
     Text,
     Html,
     Image,
-    Binary
+    Binary,
+    Hex
 }
 ```
-
-### 3.3 视图布局设计
-
-#### 3.3.1 主窗口 XAML 结构
-
-```xml
-<Window x:Class="FileLancet.UI.Views.MainWindow"
-        Title="File Lancet" 
-        Width="1400" Height="900">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>      <!-- 菜单栏 -->
-            <RowDefinition Height="*"/>         <!-- 主内容区 -->
-            <RowDefinition Height="Auto"/>      <!-- 状态栏 -->
-        </Grid.RowDefinitions>
-        
-        <!-- 菜单栏 -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="文件">
-                <MenuItem Header="打开" Command="{Binding OpenFileCommand}"/>
-                <MenuItem Header="导出" Command="{Binding ExportCommand}"/>
-                <Separator/>
-                <MenuItem Header="退出"/>
-            </MenuItem>
-        </Menu>
-        
-        <!-- 三栏主内容 -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250" MinWidth="150" MaxWidth="400"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*" MinWidth="300"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="400" MinWidth="250" MaxWidth="600"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- 左栏：文件树 -->
-            <TreeView Grid.Column="0" 
-                      ItemsSource="{Binding FileTreeNodes}"
-                      SelectedItem="{Binding SelectedNode}"/>
-            
-            <!-- 分隔线 -->
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
-            
-            <!-- 中栏：详情面板 -->
-            <ContentControl Grid.Column="2" Content="{Binding NodeDetails}"/>
-            
-            <!-- 分隔线 -->
-            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch"/>
-            
-            <!-- 右栏：预览 -->
-            <ContentControl Grid.Column="4" Content="{Binding Preview}"/>
-        </Grid>
-        
-        <!-- 状态栏 -->
-        <StatusBar Grid.Row="2">
-            <TextBlock Text="{Binding StatusMessage}"/>
-            <Separator/>
-            <TextBlock Text="{Binding FilePath}"/>
-        </StatusBar>
-    </Grid>
-</Window>
-```
-
-### 3.4 阶段二测试用例
-
-#### 3.4.1 ViewModels 单元测试（覆盖率 ≥ 85%）
-
-| 测试编号 | 测试场景 | 测试内容 | 验证点 |
-|---------|---------|---------|--------|
-| TC-201 | MainViewModel 初始化 | 创建 VM 实例 | 属性初始值正确 |
-| TC-202 | SelectedNode 设置 | 设置选中节点 | 触发属性变更通知 |
-| TC-203 | LoadFileCommand | 执行加载命令 | 调用解析服务 |
-| TC-204 | OpenFileCommand | 执行打开命令 | 显示文件对话框 |
-| TC-205 | NodeDetails 更新 | 选择不同节点 | 详情面板更新正确 |
-| TC-206 | Preview 更新 | 选择可预览节点 | 预览内容更新 |
-| TC-207 | 异步加载状态 | 加载文件过程 | IsLoading 状态正确 |
-| TC-208 | 错误处理 | 加载失败 | 错误信息显示 |
-
-#### 3.4.2 数据绑定测试
-
-| 测试编号 | 测试场景 | 操作 | 预期结果 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-209 | 文件加载 | 点击打开菜单选择 EPUB | 左侧显示文件树 | 树结构正确 |
-| TC-210 | 节点选择 | 点击树节点 | 中栏显示详情 | 属性匹配 |
-| TC-211 | 栏宽调整 | 拖拽分隔线 | 栏宽实时变化 | 布局自适应 |
-| TC-212 | 空状态 | 未加载文件 | 显示提示信息 | UI 友好 |
-| TC-213 | 大数据量 | 加载大文件 | 界面不卡顿 | 虚拟化生效 |
-| TC-214 | 属性变更通知 | 修改 VM 属性 | UI 自动更新 | INPC 实现正确 |
-
-### 3.5 阶段二交付物
-
-1. **代码交付**
-   - FileLancet.UI WPF 项目
-   - 完整的 ViewModels 实现
-   - XAML 视图文件
-
-2. **测试交付**
-   - ViewModels 单元测试（覆盖率 ≥ 85%）
-   - 数据绑定测试
-   - 手动测试清单
-   - 覆盖率分析报告
-
-3. **可运行程序**
-   - 可加载 EPUB 并显示三栏界面的桌面应用
 
 ---
 
-## 4. 阶段三：内容预览与交互完善
+## 3. v0.1.1 新增设计
 
-### 4.1 目标
-
-实现右栏预览功能，完善拖拽、文件关联等交互特性。
-
-### 4.2 预览功能设计
-
-#### 4.2.1 预览服务接口
+### 3.1 GenericFileParser 设计
 
 ```csharp
 /// <summary>
-/// 预览服务接口
+/// 通用文件解析器 - 作为兜底解析器处理任何文件格式
 /// </summary>
-public interface IPreviewService
+public class GenericFileParser : IFileLancetParser
 {
     /// <summary>
-    /// 根据节点类型获取预览内容
+    /// 只要能找到文件就返回 true（作为兜底解析器）
     /// </summary>
-    Task<PreviewViewModel> GetPreviewAsync(FileNode node);
-}
-
-/// <summary>
-/// 预览服务实现
-/// </summary>
-public class PreviewService : IPreviewService
-{
-    private readonly IContentLoader _contentLoader;
-    
-    public async Task<PreviewViewModel> GetPreviewAsync(FileNode node)
+    public bool CanParse(string filePath)
     {
-        return node.Type switch
-        {
-            NodeType.Html => await PreviewHtmlAsync(node),
-            NodeType.Css => await PreviewTextAsync(node, "css"),
-            NodeType.Image => await PreviewImageAsync(node),
-            _ => PreviewBinary(node)
-        };
+        return !string.IsNullOrEmpty(filePath) && File.Exists(filePath);
     }
-}
-```
-
-#### 4.2.2 WebView2 集成
-
-```csharp
-/// <summary>
-/// HTML 预览控件（封装 WebView2）
-/// </summary>
-public class HtmlPreviewControl : UserControl
-{
-    private WebView2 _webView;
     
     /// <summary>
-    /// 加载 HTML 内容（支持从 ZIP 流加载资源）
+    /// 解析文件，返回简化后的文件信息
     /// </summary>
-    public async Task LoadHtmlAsync(string htmlContent, string basePath);
-    
-    /// <summary>
-    /// 处理资源请求（拦截图片、CSS 等资源加载）
-    /// </summary>
-    private void OnWebResourceRequested(object sender, CoreWebView2WebResourceRequestedEventArgs e);
-}
-```
-
-### 4.3 拖拽功能设计
-
-```csharp
-/// <summary>
-/// 拖拽处理服务
-/// </summary>
-public class DragDropService
-{
-    /// <summary>
-    /// 启用窗口拖拽接收
-    /// </summary>
-    public void EnableDragDrop(Window window, Func<string, Task> onFileDropped)
+    public ParseResult Parse(string filePath)
     {
-        window.AllowDrop = true;
-        window.PreviewDragOver += (s, e) =>
+        var fileInfo = new FileInfo(filePath);
+        
+        var root = new FileNode
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                e.Effects = DragDropEffects.Copy;
-            e.Handled = true;
+            Name = fileInfo.Name,
+            Path = filePath,
+            Type = NodeType.Root,
+            Size = fileInfo.Length,
+            MimeType = GetMimeType(fileInfo.Extension)
         };
         
-        window.Drop += async (s, e) =>
+        var details = new FileDetails
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files.Length > 0)
-                    await onFileDropped(files[0]);
-            }
+            Title = fileInfo.Name,
+            FilePath = filePath,
+            FileSize = fileInfo.Length,
+            LastModified = fileInfo.LastWriteTime,
+            CreatedTime = fileInfo.CreationTime,        // v0.1.1 新增
+            FileExtension = fileInfo.Extension,         // v0.1.1 新增
+            MimeType = GetMimeType(fileInfo.Extension)  // v0.1.1 新增
         };
-    }
-}
-```
-
-### 4.4 阶段三测试用例
-
-#### 4.4.1 预览服务单元测试（覆盖率 ≥ 80%）
-
-| 测试编号 | 测试场景 | 输入 | 预期输出 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-301 | PreviewService 初始化 | 创建服务实例 | 服务就绪 | 依赖注入正确 |
-| TC-302 | HTML 预览生成 | HTML 节点 | PreviewViewModel | 类型为 Html |
-| TC-303 | 图片预览生成 | 图片节点 | PreviewViewModel | 类型为 Image |
-| TC-304 | 文本预览生成 | CSS 节点 | PreviewViewModel | 类型为 Text |
-| TC-305 | 二进制预览生成 | 未知类型节点 | PreviewViewModel | 类型为 Binary |
-| TC-306 | 预览内容加载 | 大图片 | 缩略图 | 内存优化 |
-| TC-307 | 预览缓存 | 重复预览 | 从缓存读取 | 性能优化 |
-
-#### 4.4.2 交互功能测试
-
-| 测试编号 | 测试场景 | 操作 | 预期结果 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-308 | HTML 预览 | 选择 HTML 节点 | 右栏渲染网页 | 样式图片正确 |
-| TC-309 | 图片预览 | 选择图片节点 | 显示图片 | 缩放适应 |
-| TC-310 | 代码高亮 | 选择 CSS 节点 | 语法高亮显示 | 关键字着色 |
-| TC-311 | 拖拽打开 | 拖拽 EPUB 到窗口 | 文件加载成功 | 反馈明确 |
-| TC-312 | 文件关联 | 双击 EPUB 文件 | 应用启动并加载 | 参数传递正确 |
-| TC-313 | 错误处理 | 打开损坏文件 | 显示错误提示 | 不崩溃 |
-| TC-314 | 加载状态 | 打开大文件 | 显示进度指示 | 防止假死 |
-| TC-315 | WebView2 资源拦截 | HTML 中的图片 | 从 ZIP 加载 | 资源路径正确 |
-| TC-316 | 多文件拖拽 | 拖拽多个文件 | 加载第一个 | 处理正确 |
-
-### 4.5 阶段三交付物
-
-1. **代码交付**
-   - 预览服务实现
-   - WebView2 封装控件
-   - 拖拽和文件关联功能
-
-2. **测试交付**
-   - 集成测试用例
-   - 性能测试报告
-
-3. **可运行程序**
-   - File Lancet v0.1 Beta
-   - 完整的预览和交互功能
-
----
-
-## 5. 阶段四：扩展性验证与优化
-
-### 5.1 目标
-
-验证架构灵活性，实现多格式支持基础，优化性能。
-
-### 5.2 扩展架构设计
-
-#### 5.2.1 解析器基类
-
-```csharp
-/// <summary>
-/// 解析器抽象基类
-/// </summary>
-public abstract class BaseParser : IFileLancetParser
-{
-    protected ILogger Logger { get; }
-    protected IContentLoader ContentLoader { get; }
-    
-    public abstract bool CanParse(string filePath);
-    public abstract ParseResult Parse(string filePath);
-    
-    /// <summary>
-    /// 通用异常处理
-    /// </summary>
-    protected ParseResult HandleException(Exception ex, string filePath)
-    {
-        Logger.LogError(ex, "解析文件失败: {FilePath}", filePath);
+        
         return new ParseResult
         {
-            Success = false,
-            ErrorMessage = $"解析失败: {ex.Message}",
+            Success = true,
+            RootNode = root,
+            Details = details,
             SourcePath = filePath
         };
     }
-    
-    /// <summary>
-    /// 构建通用文件节点
-    /// </summary>
-    protected FileNode CreateNode(string name, string path, NodeType type)
-    {
-        return new FileNode
-        {
-            Name = name,
-            Path = path,
-            Type = type,
-            Description = GetNodeDescription(type)
-        };
-    }
-    
-    protected abstract string GetNodeDescription(NodeType type);
 }
 ```
 
-#### 5.2.2 文本解析器示例
+### 3.2 更新后的工厂注册
 
 ```csharp
-/// <summary>
-/// 纯文本解析器（用于验证扩展性）
-/// </summary>
-public class PlainTextParser : BaseParser
+public static void InitializeDefaults()
 {
-    public override bool CanParse(string filePath)
-    {
-        return Path.GetExtension(filePath).Equals(".txt", StringComparison.OrdinalIgnoreCase);
-    }
-    
-    public override ParseResult Parse(string filePath)
-    {
-        try
-        {
-            var root = CreateNode(Path.GetFileName(filePath), "", NodeType.Root);
-            var content = CreateNode("content", "content", NodeType.Other);
-            root.Children.Add(content);
-            
-            return new ParseResult
-            {
-                Success = true,
-                RootNode = root,
-                Details = new FileDetails
-                {
-                    Title = Path.GetFileNameWithoutExtension(filePath),
-                    FilePath = filePath,
-                    FileSize = new FileInfo(filePath).Length
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex, filePath);
-        }
-    }
-    
-    protected override string GetNodeDescription(NodeType type) => "文本文件节点";
+    RegisterParser(new EpubParser());
+    RegisterParser(new PlainTextParser());
+    // ... 其他解析器
+    RegisterParser(new GenericFileParser()); // 最后注册，作为兜底
 }
 ```
 
-### 5.3 性能优化策略
-
-#### 5.3.1 内存优化
+### 3.3 FileDetails 扩展
 
 ```csharp
-/// <summary>
-/// 内存管理策略
-/// </summary>
-public class MemoryOptimization
+public class FileDetails
 {
-    /// <summary>
-    /// ZIP 流使用模式
-    /// </summary>
-    public void UseZipStream(string epubPath, Action<ZipArchive> action)
-    {
-        using var stream = File.OpenRead(epubPath);
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-        action(archive);
-        // 流自动释放
-    }
+    // v0.1.0 已有属性
+    public string FilePath { get; set; }
+    public long FileSize { get; set; }
+    public DateTime LastModified { get; set; }
     
-    /// <summary>
-    /// 大文件分块读取
-    /// </summary>
-    public async Task ReadLargeFileAsync(string path, int bufferSize = 81920)
-    {
-        await using var stream = File.OpenRead(path);
-        var buffer = new byte[bufferSize];
-        int read;
-        while ((read = await stream.ReadAsync(buffer)) > 0)
-        {
-            // 处理数据块
-            ProcessChunk(buffer, read);
-        }
-    }
+    // v0.1.1 新增属性
+    public DateTime CreatedTime { get; set; }
+    public string FileExtension { get; set; }
+    public string MimeType { get; set; }
     
-    /// <summary>
-    /// 图片缓存策略（LRU）
-    /// </summary>
-    public class ImageCache : MemoryCache<string, BitmapSource>
-    {
-        private readonly int _maxCacheSize;
-        
-        public ImageCache(int maxCacheSize = 50) : base(maxCacheSize) { }
-        
-        protected override void OnItemEvicted(string key, BitmapSource value)
-        {
-            value.Freeze(); // 释放资源
-        }
-    }
+    // ... 其他属性
 }
 ```
-
-#### 5.3.2 异步优化
-
-```csharp
-/// <summary>
-/// 异步操作优化
-/// </summary>
-public class AsyncOptimization
-{
-    /// <summary>
-    /// 并行解析多个文件
-    /// </summary>
-    public async Task<ParseResult[]> ParseMultipleAsync(string[] filePaths, int maxParallel = 4)
-    {
-        var semaphore = new SemaphoreSlim(maxParallel);
-        var tasks = filePaths.Select(async path =>
-        {
-            await semaphore.WaitAsync();
-            try
-            {
-                return await ParseAsync(path);
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
-        
-        return await Task.WhenAll(tasks);
-    }
-    
-    /// <summary>
-    /// 后台加载进度报告
-    /// </summary>
-    public async Task LoadWithProgressAsync(string filePath, IProgress<double> progress)
-    {
-        await Task.Run(async () =>
-        {
-            // 分段加载，报告进度
-            for (int i = 0; i < 100; i++)
-            {
-                await Task.Delay(10);
-                progress.Report(i / 100.0);
-            }
-        });
-    }
-}
-```
-
-### 5.4 发布流程设计
-
-```
-┌─────────────────┐
-│   编译 Release   │
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│  运行单元测试    │
-└────────┬────────┘
-         ▼
-┌─────────────────┐     失败   ┌──────────────┐
-│   测试通过？     │───────────►│   修复问题    │
-└────────┬────────┘            └──────────────┘
-         │是                    ▲
-         ▼                      │
-┌─────────────────┐             │
-│  生成安装包     │             │
-│  - MSI (x64)   │─────────────┘
-│  - ZIP 便携版   │
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│   签名验证      │
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│   发布交付      │
-└─────────────────┘
-```
-
-### 5.5 阶段四测试用例
-
-#### 5.5.1 BaseParser 单元测试（覆盖率 ≥ 90%）
-
-| 测试编号 | 测试场景 | 测试内容 | 验证点 |
-|---------|---------|---------|--------|
-| TC-401 | BaseParser 异常处理 | 模拟异常 | 错误信息正确 |
-| TC-402 | BaseParser 节点创建 | 调用 CreateNode | 节点属性正确 |
-| TC-403 | PlainTextParser CanParse | .txt 文件 | 返回 true |
-| TC-404 | PlainTextParser CanParse | 非 .txt 文件 | 返回 false |
-| TC-405 | PlainTextParser Parse | 有效 txt | ParseResult.Success |
-| TC-406 | PlainTextParser Parse | 无效路径 | 错误处理正确 |
-| TC-407 | 工厂注册新解析器 | 注册 PlainTextParser | 工厂包含新解析器 |
-| TC-408 | 工厂获取解析器 | .txt 文件 | 返回 PlainTextParser |
-
-#### 5.5.2 性能与扩展性测试
-
-| 测试编号 | 测试场景 | 操作 | 预期结果 | 验证点 |
-|---------|---------|------|---------|--------|
-| TC-409 | 扩展性验证 | 加载 .txt 文件 | 正确显示结构 | 新解析器生效 |
-| TC-410 | 内存泄漏 | 连续打开 100 个大文件 | 内存稳定 | 无泄漏 |
-| TC-411 | 并发性能 | 同时解析多个文件 | 完成时间合理 | 线程安全 |
-| TC-412 | 缓存性能 | 重复访问相同资源 | 响应时间 < 10ms | 缓存命中 |
-| TC-413 | 大文件性能 | 解析 500MB EPUB | 时间 < 30s | 性能达标 |
-| TC-414 | 安装包测试 | 安装 MSI | 正常安装运行 | 注册表正确 |
-| TC-415 | 便携版测试 | 解压 ZIP 运行 | 无需安装 | 依赖完整 |
-| TC-416 | 升级测试 | 安装新版本 | 覆盖安装成功 | 数据保留 |
-
-### 5.6 阶段四交付物
-
-1. **代码交付**
-   - BaseParser 抽象基类
-   - PlainTextParser 示例实现
-   - 性能优化代码
-
-2. **测试交付**
-   - 扩展性验证报告
-   - 性能基准测试报告
-   - 单元测试覆盖率报告（整体 ≥ 90%）
-
-3. **发布交付**
-   - Windows 安装包 (.msi)
-   - 便携版 (.zip)
-   - 发布说明
-
-4. **文档交付**
-   - 扩展开发指南
-   - 性能优化总结
 
 ---
 
-## 6. 接口汇总
+## 4. 界面布局设计
 
-### 6.1 核心接口
-
-| 接口名 | 职责 | 关键方法 |
-|-------|------|---------|
-| IFileLancetParser | 文件解析器 | CanParse, Parse, ParseAsync |
-| IContentLoader | 内容加载 | LoadContentAsync, LoadTextAsync |
-| IPreviewService | 预览服务 | GetPreviewAsync |
-
-### 6.2 数据模型
-
-| 类名 | 职责 | 关键属性 |
-|-----|------|---------|
-| FileNode | 文件树节点 | Name, Path, Type, Children |
-| FileDetails | 文件详情 | Title, Authors, FileSize, Metadata |
-| ParseResult | 解析结果 | Success, RootNode, Details |
-
-### 6.3 视图模型
-
-| 类名 | 职责 | 关键属性 |
-|-----|------|---------|
-| MainViewModel | 主窗口 VM | FileTreeNodes, SelectedNode, Commands |
-| NodeDetailsViewModel | 详情面板 VM | Properties, Metadata |
-| PreviewViewModel | 预览面板 VM | PreviewType, Content, HexContent, ShowHexView |
-
----
-
-## 7. 开发规范
-
-### 7.1 命名规范
-
-- **类名**: PascalCase (如 `FileNode`, `EpubParser`)
-- **接口名**: PascalCase + I 前缀 (如 `IFileLancetParser`)
-- **方法名**: PascalCase (如 `ParseAsync`, `LoadContent`)
-- **属性名**: PascalCase (如 `FileSize`, `SelectedNode`)
-- **字段名**: _camelCase (如 `_selectedNode`, `_entryCache`)
-- **常量名**: UPPER_SNAKE_CASE
-
-### 7.2 异步规范
-
-- 所有 IO 操作必须使用异步方法
-- 异步方法名以 Async 结尾
-- 使用 CancellationToken 支持取消
-- 避免 async void
-
-### 7.3 异常处理
-
-- 使用自定义异常类
-- 异常信息需本地化
-- 记录异常日志
-- 不向用户暴露敏感信息
-
----
-
-## 8. 附录
-
-## 6. 阶段五：XML 解析工具类
-
-### 6.1 目标
-
-针对 EPUB 解析过程中遇到的 XML 命名空间问题和 ZIP 路径兼容性问题，提取可重用的 XML 解析工具类，统一处理 XML 解析逻辑。
-
-### 6.2 问题背景
-
-在解析实际 EPUB 文件时，发现以下常见问题：
-1. **未声明的命名空间前缀**：部分 EPUB 文件使用 `dc:title` 等前缀但未声明 `xmlns:dc` 命名空间
-2. **路径格式不兼容**：ZIP 条目使用反斜杠（Windows 风格）而非正斜杠（ZIP 标准）
-3. **XML 解析重复代码**：多个解析器中都包含类似的 XML 解析和元素查找逻辑
-
-### 6.3 XmlParserHelper 设计
-
-#### 6.3.1 类职责
-
-```csharp
-/// <summary>
-/// XML 解析辅助工具类
-/// 提供统一的 XML 解析、命名空间修复、ZIP 条目查找等功能
-/// </summary>
-public static class XmlParserHelper
-{
-    /// <summary>
-    /// 解析 XML 内容，自动修复未声明的命名空间前缀
-    /// </summary>
-    public static XDocument ParseWithNamespaceFix(string xmlContent);
-    
-    /// <summary>
-    /// 从 ZIP 条目中异步加载 XML 文档
-    /// </summary>
-    public static Task<XDocument> LoadFromZipEntryAsync(ZipArchiveEntry entry, CancellationToken cancellationToken = default);
-    
-    /// <summary>
-    /// 在 ZIP 存档中查找条目（支持多种路径格式）
-    /// </summary>
-    public static ZipArchiveEntry GetZipEntry(ZipArchive archive, string path);
-    
-    /// <summary>
-    /// 根据本地名称获取元素（忽略命名空间）
-    /// </summary>
-    public static XElement GetFirstElementByLocalName(XDocument doc, string localName);
-    
-    /// <summary>
-    /// 根据本地名称获取元素值（忽略命名空间）
-    /// </summary>
-    public static string GetElementValueByLocalName(XDocument doc, string localName);
-    
-    /// <summary>
-    /// 获取所有匹配本地名称的元素
-    /// </summary>
-    public static IEnumerable<XElement> GetElementsByLocalName(XDocument doc, string localName);
-}
-```
-
-#### 6.3.2 命名空间自动修复策略
-
-```csharp
-/// <summary>
-/// 自动修复常见未声明的命名空间前缀
-/// </summary>
-private static string FixCommonNamespaces(string xmlContent)
-{
-    // 修复 dc: 前缀（Dublin Core 元数据）
-    if (xmlContent.Contains("<dc:") && !xmlContent.Contains("xmlns:dc"))
-    {
-        xmlContent = InsertNamespaceDeclaration(xmlContent, "dc", "http://purl.org/dc/elements/1.1/");
-    }
-    
-    // 修复 opf: 前缀（OPF 包文件）
-    if (xmlContent.Contains("<opf:") && !xmlContent.Contains("xmlns:opf"))
-    {
-        xmlContent = InsertNamespaceDeclaration(xmlContent, "opf", "http://www.idpf.org/2007/opf");
-    }
-    
-    // 修复 xhtml: 前缀
-    if (xmlContent.Contains("<xhtml:") && !xmlContent.Contains("xmlns:xhtml"))
-    {
-        xmlContent = InsertNamespaceDeclaration(xmlContent, "xhtml", "http://www.w3.org/1999/xhtml");
-    }
-    
-    return xmlContent;
-}
-```
-
-#### 6.3.3 ZIP 条目查找策略
-
-```csharp
-/// <summary>
-/// 在 ZIP 存档中查找条目，支持多种路径格式
-/// </summary>
-public static ZipArchiveEntry GetZipEntry(ZipArchive archive, string path)
-{
-    // 策略 1: 直接匹配
-    var entry = archive.GetEntry(path);
-    if (entry != null) return entry;
-    
-    // 策略 2: 路径分隔符转换（/ 转 \）
-    var altPath = path.Replace('/', '\\');
-    entry = archive.GetEntry(altPath);
-    if (entry != null) return entry;
-    
-    // 策略 3: 不区分大小写遍历查找
-    foreach (var e in archive.Entries)
-    {
-        if (e.FullName.Equals(path, StringComparison.OrdinalIgnoreCase) ||
-            e.FullName.Replace('\\', '/').Equals(path, StringComparison.OrdinalIgnoreCase))
-        {
-            return e;
-        }
-    }
-    
-    return null;
-}
-```
-
-### 6.4 阶段五测试用例
-
-#### 6.4.1 XmlParserHelper 单元测试（覆盖率 ≥ 90%）
-
-| 测试编号 | 测试场景 | 测试内容 | 验证点 |
-|---------|---------|---------|--------|
-| TC-501 | ParseWithNamespaceFix - 正常 XML | 验证正常 XML 解析 | 返回 XDocument |
-| TC-502 | ParseWithNamespaceFix - 未声明 dc 前缀 | 验证自动修复 DC 命名空间 | 成功解析并获取值 |
-| TC-503 | ParseWithNamespaceFix - 已声明 dc 前缀 | 验证不重复添加声明 | 正常解析 |
-| TC-504 | ParseWithNamespaceFix - 空内容 | 验证空内容抛出异常 | 抛出 ArgumentException |
-| TC-505 | GetZipEntry - 正斜杠路径 | 验证正斜杠路径查找 | 找到条目 |
-| TC-506 | GetZipEntry - 反斜杠路径 | 验证反斜杠路径查找 | 找到条目 |
-| TC-507 | GetZipEntry - 不区分大小写 | 验证大小写不敏感查找 | 找到条目 |
-| TC-508 | GetZipEntry - 不存在路径 | 验证不存在路径返回 null | 返回 null |
-| TC-509 | GetElementsByLocalName - 多个元素 | 验证获取多个匹配元素 | 返回所有匹配项 |
-| TC-510 | GetFirstElementByLocalName - 第一个 | 验证获取第一个匹配元素 | 返回第一个元素 |
-| TC-511 | GetFirstElementByLocalName - 不存在 | 验证不存在返回 null | 返回 null |
-| TC-512 | GetElementValueByLocalName - 获取值 | 验证获取元素值 | 返回值正确 |
-| TC-513 | GetElementValueByLocalName - 不存在 | 验证不存在返回 null | 返回 null |
-| TC-514 | LoadFromZipEntryAsync - 正常加载 | 验证从 ZIP 加载 XML | 返回 XDocument |
-| TC-515 | LoadFromZipEntryAsync - 未声明命名空间 | 验证自动修复并加载 | 成功解析 |
-| TC-516 | LoadFromZipEntryAsync - 取消操作 | 验证取消令牌 | 抛出 OperationCanceledException |
-
-### 6.5 阶段五交付物
-
-1. **代码交付**
-   - XmlParserHelper 工具类实现
-   - 命名空间自动修复功能
-   - ZIP 条目多策略查找功能
-
-2. **测试交付**
-   - XmlParserHelper 单元测试（16 个测试用例）
-   - 覆盖率报告（≥ 90%）
-
-3. **文档交付**
-   - XmlParserHelper 使用指南
-   - 常见问题处理说明
-
----
-
-## 6. 阶段六：十六进制预览与布局优化（续）
-
-### 6.6 布局优化设计
-
-#### 6.6.1 新布局结构
-
-将原来的三栏布局（左-中-右）改为双栏布局：
-- **左栏**：文件树（上）+ 详情面板（下），上下堆叠
-- **右栏**：内容预览区（加宽）
+### 4.1 双栏布局
 
 ```xml
 <Grid Grid.Row="1" Margin="5">
@@ -1348,150 +521,34 @@ public static ZipArchiveEntry GetZipEntry(ZipArchive archive, string path)
 </Grid>
 ```
 
-#### 6.6.2 界面简化
+---
 
-- **工具栏**：仅保留 Open 和 About 两个按钮
-- **状态栏**：移除重复的状态显示，仅保留文件路径
-- **About 对话框**：更新为 "File Analyzer"，版本号 0.1
+## 5. 测试设计
 
-### 6.7 十六进制预览设计
+### 5.1 单元测试覆盖率目标
 
-#### 6.7.1 FormatHexContent 方法
+| 模块 | 覆盖率目标 | 实际覆盖率 |
+|------|-----------|-----------|
+| Models | ≥ 95% | ~98% |
+| Services | ≥ 90% | ~92% |
+| Factories | ≥ 90% | ~95% |
+| ViewModels | ≥ 85% | ~88% |
+| Utilities | ≥ 85% | ~93% |
+| **整体** | **≥ 90%** | **~92%** |
 
-```csharp
-/// <summary>
-/// 从字节数组生成十六进制显示内容
-/// </summary>
-private string FormatHexContent(byte[] data)
-{
-    if (data == null || data.Length == 0)
-        return "No data available";
+### 5.2 测试用例分布
 
-    var sb = new StringBuilder();
-    const int bytesPerLine = 32;
-    const int maxBytes = 16384; // 最多显示 16KB
-
-    int displayLength = Math.Min(data.Length, maxBytes);
-
-    // 表头
-    sb.Append("Offset  ");
-    for (int i = 0; i < bytesPerLine; i++)
-    {
-        sb.Append($"{i:X2} ");
-    }
-    sb.AppendLine(" ASCII");
-    sb.AppendLine(new string('-', 137));
-
-    for (int i = 0; i < displayLength; i += bytesPerLine)
-    {
-        // 偏移量 (6位十六进制)
-        sb.Append($"{i:X6}  ");
-
-        // 十六进制值
-        for (int j = 0; j < bytesPerLine; j++)
-        {
-            if (i + j < displayLength)
-                sb.Append($"{data[i + j]:X2} ");
-            else
-                sb.Append("   ");
-        }
-
-        sb.Append(" ");
-
-        // ASCII 表示
-        for (int j = 0; j < bytesPerLine && i + j < displayLength; j++)
-        {
-            byte b = data[i + j];
-            sb.Append(b >= 32 && b <= 126 ? (char)b : '.');
-        }
-
-        sb.AppendLine();
-    }
-
-    if (data.Length > maxBytes)
-        sb.AppendLine($"... ({data.Length - maxBytes} more bytes)");
-
-    return sb.ToString();
-}
-```
-
-#### 6.7.2 预览视图模型更新
-
-```csharp
-public class PreviewViewModel : INotifyPropertyChanged
-{
-    // 新增属性
-    public string HexContent { get; set; }
-    public bool ShowHexView { get; set; }
-    
-    // 更新预览结果处理
-    public void UpdateFromPreviewResult(PreviewResult result)
-    {
-        // ... 其他处理 ...
-        
-        if (result.ContentType == PreviewContentType.Binary)
-        {
-            if (result.ImageData != null && result.ImageData.Length > 0)
-            {
-                HexContent = FormatHexContent(result.ImageData);
-                ShowHexView = true;
-            }
-        }
-    }
-}
-```
-
-#### 6.7.3 UI 控件
-
-```xml
-<!-- 十六进制预览 -->
-<TextBox Grid.Row="1" 
-         Text="{Binding Preview.HexContent}" 
-         IsReadOnly="True"
-         VerticalScrollBarVisibility="Auto"
-         HorizontalScrollBarVisibility="Auto"
-         FontFamily="Consolas, Courier New, monospace"
-         FontSize="12"
-         Visibility="{Binding Preview.ShowHexView, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-```
-
-### 6.8 阶段六测试用例
-
-#### 6.8.1 十六进制预览单元测试（覆盖率 ≥ 85%）
-
-| 测试编号 | 测试场景 | 测试内容 | 验证点 |
-|---------|---------|---------|--------|
-| TC-601 | FormatHexContent - 正常数据 | 验证十六进制格式化 | 返回正确格式字符串 |
-| TC-602 | FormatHexContent - 空数据 | 验证空数据处理 | 返回 "No data available" |
-| TC-603 | FormatHexContent - 偏移量 | 验证6位偏移量 | 偏移量为6位十六进制 |
-| TC-604 | FormatHexContent - 每行字节 | 验证每行32字节 | 每行显示32个十六进制值 |
-| TC-605 | FormatHexContent - ASCII对齐 | 验证ASCII列对齐 | ASCII字符正确对齐 |
-| TC-606 | FormatHexContent - 分隔线 | 验证分隔线长度 | 分隔线长度为137字符 |
-| TC-607 | PreviewViewModel - HexContent | 验证属性绑定 | 属性变更通知正确 |
-| TC-608 | PreviewViewModel - ShowHexView | 验证显示控制 | 布尔值控制显示/隐藏 |
-
-### 6.9 阶段六交付物
-
-1. **代码交付**
-   - 优化后的双栏布局界面
-   - FormatHexContent 方法实现
-   - HexContent 和 ShowHexView 属性
-   - 更新的 PreviewService 二进制预览逻辑
-
-2. **测试交付**
-   - 十六进制预览单元测试（8 个测试用例）
-   - 覆盖率报告（≥ 85%）
-
-3. **文档交付**
-   - 更新的需求文档
-   - 更新的设计文档
-   - 更新的测试报告
+| 版本 | 测试数量 | 主要内容 |
+|------|---------|---------|
+| v0.1.0 | 129 | 核心解析、界面、预览、扩展性、XML工具、十六进制 |
+| v0.1.1 | 8 | 通用文件解析器 |
+| **总计** | **137** | - |
 
 ---
 
-## 7. 接口汇总
+## 6. 接口汇总
 
-### 7.1 核心接口
+### 6.1 核心接口
 
 | 接口名 | 职责 | 关键方法 |
 |-------|------|---------|
@@ -1499,128 +556,25 @@ public class PreviewViewModel : INotifyPropertyChanged
 | IContentLoader | 内容加载 | LoadContentAsync, LoadTextAsync |
 | IPreviewService | 预览服务 | GetPreviewAsync |
 
-### 7.2 数据模型
+### 6.2 数据模型
 
 | 类名 | 职责 | 关键属性 |
 |-----|------|---------|
 | FileNode | 文件树节点 | Name, Path, Type, Children |
-| FileDetails | 文件详情 | Title, Authors, FileSize, Metadata |
+| FileDetails | 文件详情 | Title, Authors, FileSize, Metadata, FileExtension, MimeType, CreatedTime |
 | ParseResult | 解析结果 | Success, RootNode, Details |
 
-### 7.3 视图模型
+### 6.3 视图模型
 
 | 类名 | 职责 | 关键属性 |
 |-----|------|---------|
 | MainViewModel | 主窗口 VM | FileTreeNodes, SelectedNode, Commands |
 | NodeDetailsViewModel | 详情面板 VM | Properties, Metadata |
-| PreviewViewModel | 预览面板 VM | PreviewType, Content |
+| PreviewViewModel | 预览面板 VM | PreviewType, Content, HexContent, ShowHexView |
 
-### 7.4 工具类
+### 6.4 工具类
 
 | 类名 | 职责 | 关键方法 |
 |-----|------|---------|
 | XmlParserHelper | XML 解析辅助 | ParseWithNamespaceFix, GetZipEntry, GetElementValueByLocalName |
 | PerformanceOptimizer | 性能优化 | CreateCache, MonitorMemory, ThrottleAsync |
-
----
-
-## 8. 开发规范
-
-### 8.1 命名规范
-
-- **类名**: PascalCase (如 `FileNode`, `EpubParser`)
-- **接口名**: PascalCase + I 前缀 (如 `IFileLancetParser`)
-- **方法名**: PascalCase (如 `ParseAsync`, `LoadContent`)
-- **属性名**: PascalCase (如 `FileSize`, `SelectedNode`)
-- **字段名**: _camelCase (如 `_selectedNode`, `_entryCache`)
-- **常量名**: UPPER_SNAKE_CASE
-
-### 8.2 异步规范
-
-- 所有 IO 操作必须使用异步方法
-- 异步方法名以 Async 结尾
-- 使用 CancellationToken 支持取消
-- 避免 async void
-
-### 8.3 异常处理
-
-- 使用自定义异常类
-- 异常信息需本地化
-- 记录异常日志
-- 不向用户暴露敏感信息
-
----
-
-## 9. 附录
-
-### 9.1 依赖库
-
-| 库名 | 用途 | 版本 |
-|-----|------|------|
-| HtmlAgilityPack | HTML 解析 | 最新版 |
-| Microsoft.Web.WebView2 | HTML 渲染 | 最新版 |
-| ICSharpCode.AvalonEdit | 代码高亮 | 最新版 |
-| xUnit | 单元测试 | 最新版 |
-| Moq | Mock 框架 | 最新版 |
-
-### 8.2 测试覆盖率监控
-
-#### 覆盖率目标汇总
-
-| 阶段 | 模块 | 行覆盖率 | 分支覆盖率 | 方法覆盖率 |
-|------|------|---------|-----------|-----------|
-| 阶段一 | Models | ≥ 95% | ≥ 90% | ≥ 95% |
-| 阶段一 | Services | ≥ 90% | ≥ 85% | ≥ 90% |
-| 阶段一 | Utilities | ≥ 85% | ≥ 80% | ≥ 85% |
-| 阶段一 | Factories | ≥ 90% | ≥ 85% | ≥ 90% |
-| 阶段二 | ViewModels | ≥ 85% | ≥ 80% | ≥ 85% |
-| 阶段三 | PreviewService | ≥ 80% | ≥ 75% | ≥ 80% |
-| 阶段四 | BaseParser | ≥ 90% | ≥ 85% | ≥ 90% |
-| **整体** | **所有模块** | **≥ 90%** | **≥ 85%** | **≥ 90%** |
-
-#### 覆盖率检查工具
-
-```xml
-<!-- 在 .csproj 中添加 Coverlet 配置 -->
-<PropertyGroup>
-  <CollectCoverage>true</CollectCoverage>
-  <CoverletOutputFormat>cobertura,json</CoverletOutputFormat>
-  <Threshold>90</Threshold>
-  <ThresholdType>line,branch,method</ThresholdType>
-</PropertyGroup>
-```
-
-#### 覆盖率检查命令
-
-```bash
-# 运行测试并生成覆盖率报告
-dotnet test --collect:"XPlat Code Coverage"
-
-# 使用 ReportGenerator 生成 HTML 报告
-reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coveragereport
-```
-
-#### 未覆盖代码处理原则
-
-1. **排除合理未覆盖代码**
-   - 纯数据属性（POCO）
-   - 异常处理兜底代码
-   - 调试/日志代码
-
-2. **必须覆盖的代码**
-   - 所有业务逻辑分支
-   - 异常处理路径
-   - 边界条件判断
-
-3. **覆盖率下降阻断**
-   - PR 合并前必须检查覆盖率
-   - 新代码覆盖率不得低于模块平均水平
-   - 覆盖率下降 > 1% 需说明原因
-
-### 8.3 参考文档
-
-- EPUB 3.2 规范
-- WPF MVVM 最佳实践
-- WebView2 开发文档
-- xUnit 测试文档
-- Coverlet 覆盖率工具文档
