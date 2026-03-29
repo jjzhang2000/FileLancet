@@ -348,6 +348,7 @@ namespace FileLancet.UI.ViewModels
             Preview.IsLoading = true;
             Preview.PreviewTitle = $"PDF Preview: {SelectedNode.Name}";
             Preview.IsPdf = true;
+            Preview.PreviewType = PreviewType.Pdf;  // 关键：设置 PreviewType 为 Pdf
 
             try
             {
