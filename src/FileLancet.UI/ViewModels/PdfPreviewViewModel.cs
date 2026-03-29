@@ -315,9 +315,17 @@ public class PdfPreviewViewModel : INotifyPropertyChanged
 
     #region Methods
 
-    /// <summary>
-    /// 加载 PDF 文档
-    /// </summary>
+        /// <summary>
+        /// 设置总页数（在设置 PdfPath 之前调用）
+        /// </summary>
+        public void SetTotalPages(int totalPages)
+        {
+            TotalPages = totalPages;
+        }
+
+        /// <summary>
+        /// 加载 PDF 文档
+        /// </summary>
     private async Task LoadDocumentAsync()
     {
         if (string.IsNullOrEmpty(_pdfPath))

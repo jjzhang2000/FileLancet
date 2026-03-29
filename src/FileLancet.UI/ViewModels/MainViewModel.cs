@@ -388,12 +388,11 @@ namespace FileLancet.UI.ViewModels
                 var pdfRenderService = new PdfRenderService();
 
                 // 创建 PDF 预览视图模型
-                var pdfPreviewViewModel = new PdfPreviewViewModel(pdfRenderService)
-                {
-                    PdfPath = pdfPath,
-                    CurrentPage = pageNumber,
-                    TotalPages = totalPages
-                };
+                // 注意：先设置 TotalPages，再设置 PdfPath（因为设置 PdfPath 会触发加载）
+                var pdfPreviewViewModel = new PdfPreviewViewModel(pdfRenderService);
+                pdfPreviewViewModel.SetTotalPages(totalPages);
+                pdfPreviewViewModel.PdfPath = pdfPath;
+                pdfPreviewViewModel.CurrentPage = pageNumber;
 
                 Preview.PdfPreviewViewModel = pdfPreviewViewModel;
             }
