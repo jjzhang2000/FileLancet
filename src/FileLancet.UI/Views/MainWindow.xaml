@@ -191,7 +191,7 @@
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto"
                              FontFamily="Consolas"
-                             Visibility="{Binding Preview.ShowStructuredView, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                             Visibility="{Binding Preview.ShowTextPreview, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     
                     <!-- Structured Code Preview (TreeView) -->
                     <TreeView Grid.Row="1" 

@@ -160,8 +160,18 @@ namespace FileLancet.UI.ViewModels
         public bool IsPdf
         {
             get => _isPdf;
-            set { _isPdf = value; OnPropertyChanged(); }
+            set 
+            { 
+                _isPdf = value; 
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShowTextPreview));
+            }
         }
+
+        /// <summary>
+        /// 是否显示文本预览（非 PDF 模式且非结构化视图）
+        /// </summary>
+        public bool ShowTextPreview => !IsPdf && !ShowStructuredView;
 
         /// <summary>
         /// PDF 预览视图模型
@@ -195,6 +205,7 @@ namespace FileLancet.UI.ViewModels
             ShowHexView = false;
             IsPdf = false;
             PdfPreviewViewModel = null;
+            OnPropertyChanged(nameof(ShowTextPreview));
         }
 
         public void UpdatePreview(FileNode node)
