@@ -23,7 +23,8 @@ namespace FileLancet.UI.ViewModels
         Binary,
         Code,
         StructuredCode,
-        Hex
+        Hex,
+        Pdf
     }
 
     /// <summary>
@@ -46,6 +47,8 @@ namespace FileLancet.UI.ViewModels
         private bool _showStructuredView = false;
         private string _hexContent = "";
         private bool _showHexView = false;
+        private bool _isPdf;
+        private PdfPreviewViewModel? _pdfPreviewViewModel;
 
         #region Properties
 
@@ -151,6 +154,24 @@ namespace FileLancet.UI.ViewModels
             set { _showHexView = value; OnPropertyChanged(); }
         }
 
+        /// <summary>
+        /// 是否是 PDF 文件
+        /// </summary>
+        public bool IsPdf
+        {
+            get => _isPdf;
+            set { _isPdf = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// PDF 预览视图模型
+        /// </summary>
+        public PdfPreviewViewModel? PdfPreviewViewModel
+        {
+            get => _pdfPreviewViewModel;
+            set { _pdfPreviewViewModel = value; OnPropertyChanged(); }
+        }
+
         #endregion
 
         #region Methods
@@ -172,6 +193,8 @@ namespace FileLancet.UI.ViewModels
             ShowStructuredView = false;
             HexContent = "";
             ShowHexView = false;
+            IsPdf = false;
+            PdfPreviewViewModel = null;
         }
 
         public void UpdatePreview(FileNode node)
@@ -205,6 +228,13 @@ namespace FileLancet.UI.ViewModels
                 case NodeType.Folder:
                     PreviewType = PreviewType.None;
                     TextContent = $"Folder: {node.Name}\nContains {node.Children.Count} items";
+                    break;
+
+                case NodeType.PdfDocument:
+                case NodeType.PdfPage:
+                    PreviewType = PreviewType.Pdf;
+                    IsPdf = true;
+                    // PDF 预览由专门的 PdfPreviewViewModel 处理
                     break;
 
                 default:

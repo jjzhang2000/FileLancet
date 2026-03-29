@@ -242,6 +242,18 @@
                            Stretch="Uniform"
                            Visibility="{Binding Preview.PreviewType, Converter={StaticResource PreviewTypeToVisibilityConverter}, ConverterParameter=Image}"/>
                     
+                    <!-- PDF Preview -->
+                    <ContentControl Grid.Row="1"
+                                    Visibility="{Binding Preview.IsPdf, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ContentControl.Content>
+                            <Binding Path="Preview.PdfPreviewViewModel">
+                                <Binding.Converter>
+                                    <converters:PdfPreviewViewModelToViewConverter/>
+                                </Binding.Converter>
+                            </Binding>
+                        </ContentControl.Content>
+                    </ContentControl>
+                    
                     <!-- Hex Preview (for binary files) -->
                     <TextBox Grid.Row="1" 
                              Text="{Binding Preview.HexContent}" 

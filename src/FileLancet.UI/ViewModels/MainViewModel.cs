@@ -307,6 +307,13 @@ namespace FileLancet.UI.ViewModels
             // 先清空之前的内容，避免前一元素预览残留
             Preview.Clear();
 
+            // 处理 PDF 预览
+            if (SelectedNode.Type == NodeType.PdfDocument || SelectedNode.Type == NodeType.PdfPage)
+            {
+                await UpdatePdfPreviewAsync();
+                return;
+            }
+
             if (_contentLoader == null)
             {
                 // 没有内容加载器时，使用默认预览
@@ -328,6 +335,65 @@ namespace FileLancet.UI.ViewModels
                 Preview.Clear();
                 Preview.HasError = true;
                 Preview.ErrorMessage = $"Preview error: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// 更新 PDF 预览
+        /// </summary>
+        private async Task UpdatePdfPreviewAsync()
+        {
+            if (SelectedNode == null) return;
+
+            Preview.IsLoading = true;
+            Preview.PreviewTitle = $"PDF Preview: {SelectedNode.Name}";
+            Preview.IsPdf = true;
+
+            try
+            {
+                // 获取 PDF 文件路径
+                string pdfPath;
+                int pageNumber = 1;
+
+                if (SelectedNode.Type == NodeType.PdfDocument)
+                {
+                    pdfPath = SelectedNode.Path;
+                }
+                else if (SelectedNode.Type == NodeType.PdfPage)
+                {
+                    // 从路径中提取页码，格式为 "filepath#page=N"
+                    var pathParts = SelectedNode.Path.Split("#page=");
+                    pdfPath = pathParts[0];
+                    if (pathParts.Length > 1 && int.TryParse(pathParts[1], out var page))
+                    {
+                        pageNumber = page;
+                    }
+                }
+                else
+                {
+                    return;
+                }
+
+                // 创建 PDF 渲染服务
+                var pdfRenderService = new PdfRenderService();
+
+                // 创建 PDF 预览视图模型
+                var pdfPreviewViewModel = new PdfPreviewViewModel(pdfRenderService)
+                {
+                    PdfPath = pdfPath,
+                    CurrentPage = pageNumber
+                };
+
+                Preview.PdfPreviewViewModel = pdfPreviewViewModel;
+            }
+            catch (Exception ex)
+            {
+                Preview.HasError = true;
+                Preview.ErrorMessage = $"PDF preview error: {ex.Message}";
+            }
+            finally
+            {
+                Preview.IsLoading = false;
             }
         }
 
